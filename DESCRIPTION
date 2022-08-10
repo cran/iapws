@@ -1,0 +1,21 @@
+Package: iapws
+Type: Package
+Title: Formulations of International Association for the Properties of
+        Water and Steam
+Version: 0.7
+Date: 2022-08-05
+Authors@R: person("Jonathan", "Debove", email = "jondebove@gmail.com",
+		  role = c("aut", "cre"))
+Depends: R (>= 3.3.1)
+Description: Implementation of some of the formulations for the thermodynamic
+	and transport properties of ordinary water and steam released by the
+	International Association for the Properties of Water and Steam (IAPWS).
+	More specifically, the releases referenced R6-95(2018), R7-97(2012),
+	R12-08 and R15-11 at <http://iapws.org/release.html>.
+License: GPL (>= 3)
+NeedsCompilation: yes
+Packaged: 2022-08-05 21:31:38 UTC; jon
+Author: Jonathan Debove [aut, cre]
+Maintainer: Jonathan Debove <jondebove@gmail.com>
+Repository: CRAN
+Date/Publication: 2022-08-10 14:30:06 UTC
