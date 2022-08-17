@@ -19,7 +19,7 @@
 #ifndef IAPWS_VISC_H
 #define IAPWS_VISC_H
 
-double if97_eta(iapws_phi *phi);
-double iapws95_eta(iapws_phi *phi);
+double if97_eta(const iapws_phi *phi);
+double iapws95_eta(const iapws_phi *phi);
 
 #endif

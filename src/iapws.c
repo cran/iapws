@@ -20,15 +20,15 @@
 
 #include "iapws.h"
 
-int	iapws_nroot_max_iter = 20;
+int	iapws_nroot_max_iter = 30;
 double	iapws_nroot_tol = 1e-9;
 
-double iapws_t(iapws_phi *phi)  /* K */
+double iapws_t(const iapws_phi *phi)  /* K */
 {
 	return phi->t;
 }
 
-double iapws_rho(iapws_phi *phi)  /* kg/m3 */
+double iapws_rho(const iapws_phi *phi)  /* kg/m3 */
 {
 	switch (phi->type) {
 		case IAPWS_PHI:
@@ -40,7 +40,7 @@ double iapws_rho(iapws_phi *phi)  /* kg/m3 */
 	}
 }
 
-double iapws_p(iapws_phi *phi)  /* MPa */
+double iapws_p(const iapws_phi *phi)  /* MPa */
 {
 	switch (phi->type) {
 		case IAPWS_PHI:
@@ -52,7 +52,7 @@ double iapws_p(iapws_phi *phi)  /* MPa */
 	}
 }
 
-double iapws_v(iapws_phi *phi)  /* m3/kg */
+double iapws_v(const iapws_phi *phi)  /* m3/kg */
 {
 	switch (phi->type) {
 		case IAPWS_PHI:
@@ -64,7 +64,7 @@ double iapws_v(iapws_phi *phi)  /* m3/kg */
 	}
 }
 
-double iapws_f(iapws_phi *phi)  /* kJ/kg */
+double iapws_f(const iapws_phi *phi)  /* kJ/kg */
 {
 	double ans;
 	switch (phi->type) {
@@ -80,7 +80,7 @@ double iapws_f(iapws_phi *phi)  /* kJ/kg */
 	return ans * phi->t * phi->R;
 }
 
-double iapws_g(iapws_phi *phi)  /* kJ/kg */
+double iapws_g(const iapws_phi *phi)  /* kJ/kg */
 {
 	double ans;
 	switch (phi->type) {
@@ -96,7 +96,7 @@ double iapws_g(iapws_phi *phi)  /* kJ/kg */
 	return ans * phi->t * phi->R;
 }
 
-double iapws_u(iapws_phi *phi)  /* kJ/kg */
+double iapws_u(const iapws_phi *phi)  /* kJ/kg */
 {
 	double ans;
 	switch (phi->type) {
@@ -112,7 +112,7 @@ double iapws_u(iapws_phi *phi)  /* kJ/kg */
 	return ans * phi->t * phi->R;
 }
 
-double iapws_h(iapws_phi *phi)  /* kJ/kg */
+double iapws_h(const iapws_phi *phi)  /* kJ/kg */
 {
 	double ans;
 	switch (phi->type) {
@@ -128,12 +128,12 @@ double iapws_h(iapws_phi *phi)  /* kJ/kg */
 	return ans * phi->t * phi->R;
 }
 
-double iapws_s(iapws_phi *phi)  /* kJ/kg/K */
+double iapws_s(const iapws_phi *phi)  /* kJ/kg/K */
 {
 	return (phi->d01 - phi->d00) * phi->R;
 }
 
-double iapws_cv(iapws_phi *phi)  /* kJ/kg/K */
+double iapws_cv(const iapws_phi *phi)  /* kJ/kg/K */
 {
 	double ans;
 	switch (phi->type) {
@@ -150,7 +150,7 @@ double iapws_cv(iapws_phi *phi)  /* kJ/kg/K */
 	return ans * phi->R;
 }
 
-double iapws_cp(iapws_phi *phi)  /* kJ/kg/K */
+double iapws_cp(const iapws_phi *phi)  /* kJ/kg/K */
 {
 	double ans;
 	switch (phi->type) {
@@ -168,7 +168,7 @@ double iapws_cp(iapws_phi *phi)  /* kJ/kg/K */
 	return ans * phi->R;
 }
 
-double iapws_w(iapws_phi *phi)  /* m/s */
+double iapws_w(const iapws_phi *phi)  /* m/s */
 {
 	double ans;
 	switch (phi->type) {
@@ -191,7 +191,7 @@ double iapws_w(iapws_phi *phi)  /* m/s */
 
 /* alpha = beta * chit */
 /* -1/v dv/dt */
-double iapws_alpha(iapws_phi *phi)  /* 1/K */
+double iapws_alpha(const iapws_phi *phi)  /* 1/K */
 {
 	double ans = (phi->d10 - phi->d11) / phi->t;
 	switch (phi->type) {
@@ -205,7 +205,7 @@ double iapws_alpha(iapws_phi *phi)  /* 1/K */
 }
 
 /* dp/dt */
-double iapws_beta(iapws_phi *phi)  /* MPa/K */
+double iapws_beta(const iapws_phi *phi)  /* MPa/K */
 {
 	double ans = phi->d10 - phi->d11;
 	switch (phi->type) {
@@ -219,7 +219,7 @@ double iapws_beta(iapws_phi *phi)  /* MPa/K */
 }
 
 /* -1/v dv/dp */
-double iapws_chit(iapws_phi *phi)  /* 1/MPa */
+double iapws_chit(const iapws_phi *phi)  /* 1/MPa */
 {
 	switch (phi->type) {
 		case IAPWS_PHI:
@@ -232,7 +232,7 @@ double iapws_chit(iapws_phi *phi)  /* 1/MPa */
 	}
 }
 
-double iapws_sigma(iapws_phi *phi)  /* mN/m */
+double iapws_sigma(const iapws_phi *phi)  /* mN/m */
 {
 	double t  = 1.0 - phi->t / IAPWS_TC;
 	return pow(t, 1.256) * (1.0 - t * 0.625) * 235.8;

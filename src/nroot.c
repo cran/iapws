@@ -20,15 +20,19 @@
 #	include <stdio.h>
 #endif
 
-#include <stdlib.h>
+#ifdef _WIN32
+#	include <malloc.h>
+#	define alloca _alloca
+#else
+#	include <alloca.h>
+#endif
+
 #include <math.h>
 
-#include "nroot.h"
+#include <R_ext/BLAS.h>
+#include <R_ext/Lapack.h>
 
-#ifdef USE_LAPACK
-#	include <R_ext/BLAS.h>
-#	include <R_ext/Lapack.h>
-#endif
+#include "nroot.h"
 
 int nroot(root_fun fun, double *x, void *prms, double *errf,
 		double tol, int maxiter)
@@ -37,14 +41,15 @@ int nroot(root_fun fun, double *x, void *prms, double *errf,
 	double fx, dfx;
 	for (iter = 0; iter < maxiter; ++iter) {
 		fun(x, prms, &fx, &dfx);
+		*errf = fabs(fx);
 #ifndef NDEBUG
 		fprintf(stderr, "nroot: i=%d x=%.8f fx=%.8e df/dx=%.8e\n",
 				iter, *x, fx, dfx);
 #endif
-		if ((*errf = fabs(fx)) <= tol) {
-			++iter;
+		if (*errf <= tol) {
 			break;
-		} else if (dfx == 0) {
+		}
+		if (dfx == 0) {
 			iter = -99;
 			break;
 		}
@@ -80,7 +85,6 @@ int nroot2(root_fun fun, double *x, void *prms,
 	return iter;
 }
 
-#ifdef USE_LAPACK
 int nrootn(int n, root_fun fun, double *x, void *prms,
 		double *errf, double tol, int maxiter)
 {
@@ -93,9 +97,9 @@ int nrootn(int n, root_fun fun, double *x, void *prms,
 	int *ipiv;
 	int info;
 
-	if ((fx = malloc(sizeof(fx) * n)) == NULL) goto FX_CLEANUP;
-	if ((dfx = malloc(sizeof(dfx) * n * n)) == NULL) goto DFX_CLEANUP;
-	if ((ipiv = malloc(sizeof(ipiv) * n)) == NULL) goto IPIV_CLEANUP;
+	fx = alloca(sizeof(fx) * n);
+	dfx = alloca(sizeof(dfx) * n * n);
+	ipiv = alloca(sizeof(ipiv) * n);
 
 	for (iter = 0; iter < maxiter; ++iter) {
 		fun(x, prms, fx, dfx);
@@ -115,12 +119,5 @@ int nrootn(int n, root_fun fun, double *x, void *prms,
 		F77_NAME(daxpy)(&n, &d1, fx, &i1, x, &i1);
 	}
 
-	free(ipiv);
-IPIV_CLEANUP:
-	free(dfx);
-DFX_CLEANUP:
-	free(fx);
-FX_CLEANUP:
 	return iter;
 }
-#endif /* USE_LAPACK */

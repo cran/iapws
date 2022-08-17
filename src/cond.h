@@ -19,7 +19,7 @@
 #ifndef IAPWS_COND_H
 #define IAPWS_COND_H
 
-double if97_lambda(iapws_phi *gamma);
-double iapws95_lambda(iapws_phi *phi);
+double if97_lambda(const iapws_phi *gamma);
+double iapws95_lambda(const iapws_phi *phi);
 
 #endif

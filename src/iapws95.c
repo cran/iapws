@@ -301,6 +301,8 @@ static void get_phi_pt(double *rho, void *xphi, double *p, double *dp)
 	*/
 }
 
+#define FTOL (1.01)
+
 int iapws95_phi_pt(double p, double t, iapws_state_id state, iapws_phi *phi)
 {
 	int iter;
@@ -322,15 +324,15 @@ int iapws95_phi_pt(double p, double t, iapws_state_id state, iapws_phi *phi)
 	rho = iapws_v(phi);
 	rho = rho != 0.0 ? 1.0 / rho : IAPWS_RHOC;
 	if (state == IAPWS_LIQUID) {
-		rho *= 1.05;
+		rho *= FTOL;
 	} else if (state == IAPWS_GAS) {
-		rho *= 0.95;
+		rho /= FTOL;
 	}
 
 	phi->p = p;
 	phi->t = t;
 	iter = nroot(get_phi_pt, &rho, phi, &err, tol, maxiter);
-	if (iter > 0 && iter < maxiter) return 0;
+	if (iter >= 0 && iter < maxiter) return 0;
 	else return -1;
 }
 
@@ -364,9 +366,9 @@ int iapws95_sat(double t, iapws_phi *phil, iapws_phi *phig)
 	if (p == 0.0) return -1;  /* test if outside of saturation line */
 	if (if97_gamma(p, t, IAPWS_LIQUID, phil) != 0) return -11;
 	if (if97_gamma(p, t, IAPWS_GAS, phig) != 0) return -12;
-	double x[2] = { iapws_rho(phil) * 1.05, iapws_rho(phig) * 0.95};
+	double x[2] = { iapws_rho(phil) * FTOL, iapws_rho(phig) / FTOL };
 	iter = nroot2(get_sat, x, phi, &err, tol, maxiter);
-	if (iter > 0 && iter < maxiter) return 0;
+	if (iter >= 0 && iter < maxiter) return 0;
 	else return -1;
 }
 
@@ -407,9 +409,9 @@ int iapws95_sat_p(double p, iapws_phi *phil, iapws_phi *phig)
 	if (t == 0.0) return -1;  /* test if outside of saturation line */
 	if (if97_gamma(p, t, IAPWS_LIQUID, phil) != 0) return -11;
 	if (if97_gamma(p, t, IAPWS_GAS, phig) != 0) return -12;
-	double x[3] = { iapws_rho(phil) * 1.05, iapws_rho(phig) * 0.95, t };
+	double x[3] = { iapws_rho(phil) * FTOL, iapws_rho(phig) / FTOL, t };
 	iter = nrootn(3, get_sat_p, x, phi, &err, tol, maxiter);
-	if (iter > 0 && iter < maxiter) return 0;
+	if (iter >= 0 && iter < maxiter) return 0;
 	else return -1;
 }
 

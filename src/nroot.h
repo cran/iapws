@@ -19,16 +19,12 @@
 #ifndef IAPWS_NROOT_H
 #define IAPWS_NROOT_H
 
-#define USE_LAPACK
-
 typedef void root_fun(double *x, void *prms, double *fx, double *dfx);
 int nroot(root_fun fun, double *x, void *prms,
 		double *errf, double tol, int maxiter);
 int nroot2(root_fun fun, double *x, void *prms,
 		double *errf, double tol, int maxiter);
-#ifdef USE_LAPACK
 int nrootn(int n, root_fun fun, double *x, void *prms,
 		double *errf, double tol, int maxiter);
-#endif
 
 #endif

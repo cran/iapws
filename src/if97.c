@@ -32,7 +32,7 @@
 static void gamma_r1(double p, double t, iapws_phi *gamma);
 static void gamma_r2(double p, double t, int meta, iapws_phi *gamma);
 static void phi_r3(double delta, double tau, iapws_phi *phi);
-static void get_delta_r3(double p, double tau, double *delta);
+static int get_delta_r3(double p, double tau, double *delta);
 static void gamma_r5(double p, double t, iapws_phi *gamma);
 static double pi_r4(double theta);
 static double theta_r4(double pi);
@@ -110,7 +110,9 @@ int if97_gamma(double p, double t, iapws_state_id state, iapws_phi *gamma)
 {
 	if97_region_id reg = if97_region(p, t);
 	int meta = 0;
-	double tau, delta = 2.0;
+	int err = 0;
+	double tau = IAPWS_TC / t;
+	double delta = 2.0;
 
 	if (state == IAPWS_LIQUID) {
 		if (reg == IF97_WATER) {
@@ -128,7 +130,7 @@ int if97_gamma(double p, double t, iapws_state_id state, iapws_phi *gamma)
 			meta = (p < 10.0 ? 1 : 0);
 			reg = IF97_STEAM;
 		} else if (reg == IF97_SUPER) {
-			delta = sat_rhog(t) / IAPWS_RHOC;
+			delta = sat_rhog(t) / IAPWS_RHOC * 0.7;
 			if (delta == 0.0) delta = 0.5;
 		} else if (reg == IF97_GAS) {
 		} else {
@@ -157,8 +159,7 @@ int if97_gamma(double p, double t, iapws_state_id state, iapws_phi *gamma)
 			gamma_r2(p, t, meta, gamma);
 			break;
 		case IF97_SUPER:
-			tau = IAPWS_TC / t;
-			get_delta_r3(p, tau, &delta);
+			err = get_delta_r3(p, tau, &delta);
 			gamma->rho = delta * IAPWS_RHOC;
 			phi_r3(delta, tau, gamma);
 			break;
@@ -166,9 +167,9 @@ int if97_gamma(double p, double t, iapws_state_id state, iapws_phi *gamma)
 			gamma_r5(p, t, gamma);
 			break;
 		default:
-			return -1;
+			err = -1;
 	}
-	return 0;
+	return err;
 }
 
 /* static functions */
@@ -482,7 +483,7 @@ static void get_pdp_r3(double *delta, void *ptau, double *p, double *dp)
 	*dp = (phi.d10 * 2. + phi.d20) * fact;
 }
 
-static void get_delta_r3(double p, double tau, double *delta)
+static int get_delta_r3(double p, double tau, double *delta)
 {
 	int iter;
 	int maxiter = iapws_nroot_max_iter;
@@ -490,7 +491,8 @@ static void get_delta_r3(double p, double tau, double *delta)
 	double ptau[2] = { p, tau };
 	double err;
 	iter = nroot(get_pdp_r3, delta, ptau, &err, tol, maxiter);
-	assert(iter > 0 && iter < maxiter);  /* FIXME */
+	if (iter >= 0 && iter < maxiter) return 0;
+	else return -1;
 }
 
 #define XCOEF	(coef_r5)

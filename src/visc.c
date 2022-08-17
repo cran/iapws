@@ -85,12 +85,12 @@ static double eta01(double rho, double t)
 	return 100.0 / sqrt(tau) / eta0 * exp(delta * eta1);
 }
 
-double if97_eta(iapws_phi *phi)  /* µPa.s */
+double if97_eta(const iapws_phi *phi)  /* µPa.s */
 {
 	return eta01(iapws_rho(phi), iapws_t(phi));
 }
 
-double iapws95_eta(iapws_phi *phi)  /* µPa.s */
+double iapws95_eta(const iapws_phi *phi)  /* µPa.s */
 {
 	const double x = 0.068;
 	const double qc = 1.0 / 1.9;  /* 1/nm */

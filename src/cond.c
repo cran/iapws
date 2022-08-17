@@ -77,7 +77,7 @@ static double lambda01(double rho, double t)	/* mW/K/m */
 	return 1.0 / sqrt(tau) / lambda0 * exp(delta * lambda1);
 }
 
-static double lambda2(iapws_phi *phi, double dchi, double eta)	/* mW/K/m */
+static double lambda2(const iapws_phi *phi, double dchi, double eta)	/* mW/K/m */
 {
 	const double lam = 177.8514;
 	const double qd = 1.0 / 0.4;	/* 1/nm */
@@ -103,7 +103,7 @@ static double lambda2(iapws_phi *phi, double dchi, double eta)	/* mW/K/m */
 	return lam * delta * t * z * cp / (eta * IAPWS95_R * IAPWS_TC);
 }
 
-double if97_lambda(iapws_phi *gamma)	/* mW/K/m */
+double if97_lambda(const iapws_phi *gamma)	/* mW/K/m */
 {
 	double rho = iapws_rho(gamma);
 	double t = iapws_t(gamma);
@@ -138,7 +138,7 @@ double if97_lambda(iapws_phi *gamma)	/* mW/K/m */
 	return lambda01(rho, t) + lambda2(gamma, dchi, if97_eta(gamma));
 }
 
-double iapws95_lambda(iapws_phi *phi)	/* mW/K/m */
+double iapws95_lambda(const iapws_phi *phi)	/* mW/K/m */
 {
 	double rho = iapws_rho(phi);
 	double t = iapws_t(phi);

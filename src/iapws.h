@@ -50,21 +50,21 @@ typedef struct {
 	double R;
 } iapws_phi;
 
-double iapws_rho(iapws_phi *phi);
-double iapws_t(iapws_phi *phi);
-double iapws_p(iapws_phi *phi);
-double iapws_v(iapws_phi *phi);
-double iapws_f(iapws_phi *phi);
-double iapws_g(iapws_phi *phi);
-double iapws_u(iapws_phi *phi);
-double iapws_h(iapws_phi *phi);
-double iapws_s(iapws_phi *phi);
-double iapws_cv(iapws_phi *phi);
-double iapws_cp(iapws_phi *phi);
-double iapws_w(iapws_phi *phi);
-double iapws_alpha(iapws_phi *phi);
-double iapws_beta(iapws_phi *phi);
-double iapws_chit(iapws_phi *phi);
-double iapws_sigma(iapws_phi *phi);
+double iapws_rho(const iapws_phi *phi);
+double iapws_t(const iapws_phi *phi);
+double iapws_p(const iapws_phi *phi);
+double iapws_v(const iapws_phi *phi);
+double iapws_f(const iapws_phi *phi);
+double iapws_g(const iapws_phi *phi);
+double iapws_u(const iapws_phi *phi);
+double iapws_h(const iapws_phi *phi);
+double iapws_s(const iapws_phi *phi);
+double iapws_cv(const iapws_phi *phi);
+double iapws_cp(const iapws_phi *phi);
+double iapws_w(const iapws_phi *phi);
+double iapws_alpha(const iapws_phi *phi);
+double iapws_beta(const iapws_phi *phi);
+double iapws_chit(const iapws_phi *phi);
+double iapws_sigma(const iapws_phi *phi);
 
 #endif

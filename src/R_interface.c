@@ -40,7 +40,7 @@ static double (*iapws_a[15])(iapws_phi *phi) = {
 
 /* IF97 */
 
-static double (*if97_a[18])(iapws_phi *phi) = {
+static double (*if97_a[18])(const iapws_phi *phi) = {
 	iapws_f, iapws_g,
 	iapws_u, iapws_h,
 	iapws_s, iapws_t,
@@ -94,7 +94,7 @@ SEXP R_if97(SEXP w, SEXP p, SEXP t, SEXP s)
 
 /* IAPWS95 */
 
-static double (*iapws95_a[18])(iapws_phi *phi) = {
+static double (*iapws95_a[18])(const iapws_phi *phi) = {
 	iapws_f, iapws_g,
 	iapws_u, iapws_h,
 	iapws_s, iapws_t,
@@ -234,4 +234,28 @@ SEXP R_iapws95_sat_p(SEXP w, SEXP t)
 
 	UNPROTECT(1);
 	return d;
+}
+
+#include <R_ext/Rdynload.h>
+#define ADDENTRY(f, n) {#f, (DL_FUNC) &f, n}
+
+static const R_CallMethodDef CallEntries[] = {
+	ADDENTRY(R_if97_region,	2),
+	ADDENTRY(R_if97_state,	2),
+	ADDENTRY(R_if97_tsat,	1),
+	ADDENTRY(R_if97_psat,	1),
+	ADDENTRY(R_if97,	4),
+	ADDENTRY(R_iapws95_state,	2),
+	ADDENTRY(R_iapws95_sat,	2),
+	ADDENTRY(R_iapws95_sat_p,	2),
+	ADDENTRY(R_iapws95,	3),
+	ADDENTRY(R_iapws95_pt,	4),
+	{NULL, NULL, 0},
+};
+
+void R_init_iapws(DllInfo *dll)
+{
+	R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+	R_useDynamicSymbols(dll, FALSE);
+	R_forceSymbols(dll, TRUE);
 }
