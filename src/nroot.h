@@ -21,10 +21,10 @@
 
 typedef void root_fun(double *x, void *prms, double *fx, double *dfx);
 int nroot(root_fun fun, double *x, void *prms,
-		double *errf, double tol, int maxiter);
+		double *tolf, double *tolx, int *maxiter);
 int nroot2(root_fun fun, double *x, void *prms,
-		double *errf, double tol, int maxiter);
+		double *tolf, double *tolx, int *maxiter);
 int nrootn(int n, root_fun fun, double *x, void *prms,
-		double *errf, double tol, int maxiter);
+		double *tolf, double *tolx, int *maxiter);
 
 #endif

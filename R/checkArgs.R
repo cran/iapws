@@ -18,7 +18,8 @@
 		  solid  = 0L,
 		  liquid = 1L,
 		  gas    = 2L,
-		  supercritical = 3L)
+		  supercritical = 3L,
+		  saturated = 4L)
 
 .check_state <- function(state)
 {

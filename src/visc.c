@@ -69,8 +69,8 @@ static const struct {
 
 static double eta01(double rho, double t)
 {
-	double tau = IAPWS_TC / t;
-	double delta = rho / IAPWS_RHOC;
+	const double tau = IAPWS_TC / t;
+	const double delta = rho / IAPWS_RHOC;
 	double eta0 = 0.0;
 	double eta1 = 0.0;
 	int i;
@@ -101,8 +101,8 @@ double iapws95_eta(const iapws_phi *phi)  /* µPa.s */
 	const double gam0 = 0.06;
 	const double tr = 1.5 * IAPWS_TC;
 
-	double rho = iapws_rho(phi);
-	double t = iapws_t(phi);
+	const double rho = iapws_rho(phi);
+	const double t = iapws_t(phi);
 	double eta = eta01(rho, t);
 
 	iapws_phi phir;

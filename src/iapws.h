@@ -27,8 +27,9 @@
 #define IAPWS_RHOC	322.0		/* kg/m3   */
 #define IAPWS_PC	22.064		/* MPa	   */
 
-extern int iapws_nroot_max_iter;
-extern double iapws_nroot_tol;
+extern int iapws_nroot_maxiter;
+extern double iapws_nroot_tolf;
+extern double iapws_nroot_tolx;
 
 typedef enum {
 	IAPWS_UNDEF = -1,
@@ -36,6 +37,7 @@ typedef enum {
 	IAPWS_LIQUID,
 	IAPWS_GAS,
 	IAPWS_CRIT,
+	IAPWS_SAT,
 } iapws_state_id;
 
 typedef struct {

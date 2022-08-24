@@ -9,5 +9,6 @@ export(iapws95_pt)
 export(iapws95_sat)
 export(iapws95_sat_p)
 export(iapws95_state)
+export(iapws95_state_rhot)
 
 useDynLib(iapws, .registration = TRUE)

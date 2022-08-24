@@ -16,27 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "R_interface.h"
+#include <R_ext/Rdynload.h>
 
+#include "R_interface.h"
 #include "iapws.h"
 #include "iapws95.h"
 #include "if97.h"
 #include "visc.h"
 #include "cond.h"
-
-#if 0
-static double (*iapws_a[15])(iapws_phi *phi) = {
-	iapws_f, iapws_g,
-	iapws_u, iapws_h,
-	iapws_s, iapws_t,
-	iapws_p, iapws_v,
-	iapws_cp, iapws_cv,
-	iapws_w, iapws_rho,
-	iapws_chit,
-	NULL, /* eta */
-	NULL, /* lambda */
-};
-#endif
 
 /* IF97 */
 
@@ -75,9 +62,9 @@ SEXP R_if97(SEXP w, SEXP p, SEXP t, SEXP s)
 	double *xd = REAL(d);
 
 	iapws_phi gamma;
-	int err, offset;
+	int offset;
 	MOD_ITERATE3(n, np, nt, ns, i, ip, it, is,
-		if ((err = if97_gamma(xp[ip], xt[it], xs[is], &gamma)) == 0) {
+		if (if97_gamma(xp[ip], xt[it], xs[is], &gamma) == 0) {
 			for (iw = 0, offset = 0; iw < nw; iw++, offset += n) {
 				xd[i + offset] = if97_a[xw[iw]](&gamma);
 			}
@@ -108,6 +95,7 @@ static double (*iapws95_a[18])(const iapws_phi *phi) = {
 };
 
 MAKE_R_FUN_2(iapws95_state, double, double, int)
+MAKE_R_FUN_2(iapws95_state_rhot, double, double, int)
 
 SEXP R_iapws95(SEXP w, SEXP r, SEXP t)
 {
@@ -123,9 +111,9 @@ SEXP R_iapws95(SEXP w, SEXP r, SEXP t)
 	double *xd = REAL(d);
 
 	iapws_phi phi;
-	int err, offset;
+	int offset;
 	MOD_ITERATE2(n, nr, nt, i, ir, it,
-		if ((err = iapws95_phi(xr[ir], xt[it], &phi)) == 0) {
+		if (iapws95_phi(xr[ir], xt[it], &phi) == 0) {
 			for (iw = 0, offset = 0; iw < nw; iw++, offset += n) {
 				xd[i + offset] = iapws95_a[xw[iw]](&phi);
 			}
@@ -157,9 +145,9 @@ SEXP R_iapws95_pt(SEXP w, SEXP p, SEXP t, SEXP s)
 	double *xd = REAL(d);
 
 	iapws_phi phi;
-	int err, offset;
+	int offset;
 	MOD_ITERATE3(n, np, nt, ns, i, ip, it, is,
-		if ((err = iapws95_phi_pt(xp[ip], xt[it], xs[is], &phi)) == 0) {
+		if (iapws95_phi_pt(xp[ip], xt[it], xs[is], &phi) == 0) {
 			for (iw = 0, offset = 0; iw < nw; iw++, offset += n) {
 				xd[i + offset] = iapws95_a[xw[iw]](&phi);
 			}
@@ -186,9 +174,9 @@ SEXP R_iapws95_sat(SEXP w, SEXP t)
 	double *xd = REAL(d);
 
 	iapws_phi phil, phig;
-	int err, offset;
+	int offset;
 	R_ITERATE(nt, it,
-		if ((err = iapws95_sat(xt[it], &phil, &phig)) == 0) {
+		if (iapws95_sat(xt[it], &phil, &phig) == 0) {
 			for (iw = 0, offset = 0; iw < nw; iw++, offset += nt) {
 				xd[it + offset] = iapws95_a[xw[iw]](&phil);
 				xd[it + offset + ntw] = iapws95_a[xw[iw]](&phig);
@@ -217,9 +205,9 @@ SEXP R_iapws95_sat_p(SEXP w, SEXP t)
 	double *xd = REAL(d);
 
 	iapws_phi phil, phig;
-	int err, offset;
+	int offset;
 	R_ITERATE(nt, it,
-		if ((err = iapws95_sat_p(xt[it], &phil, &phig)) == 0) {
+		if (iapws95_sat_p(xt[it], &phil, &phig) == 0) {
 			for (iw = 0, offset = 0; iw < nw; iw++, offset += nt) {
 				xd[it + offset] = iapws95_a[xw[iw]](&phil);
 				xd[it + offset + ntw] = iapws95_a[xw[iw]](&phig);
@@ -236,7 +224,6 @@ SEXP R_iapws95_sat_p(SEXP w, SEXP t)
 	return d;
 }
 
-#include <R_ext/Rdynload.h>
 #define ADDENTRY(f, n) {#f, (DL_FUNC) &f, n}
 
 static const R_CallMethodDef CallEntries[] = {
@@ -246,6 +233,7 @@ static const R_CallMethodDef CallEntries[] = {
 	ADDENTRY(R_if97_psat,	1),
 	ADDENTRY(R_if97,	4),
 	ADDENTRY(R_iapws95_state,	2),
+	ADDENTRY(R_iapws95_state_rhot,	2),
 	ADDENTRY(R_iapws95_sat,	2),
 	ADDENTRY(R_iapws95_sat_p,	2),
 	ADDENTRY(R_iapws95,	3),

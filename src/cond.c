@@ -59,8 +59,8 @@ static const double coef1[SIZE1][SIZE2] = {
 static double lambda01(double rho, double t)	/* mW/K/m */
 {
 
-	double tau = IAPWS_TC / t;
-	double delta = rho / IAPWS_RHOC;
+	const double tau = IAPWS_TC / t;
+	const double delta = rho / IAPWS_RHOC;
 	double lambda0 = 0.0;
 	double lambda1 = 0.0;
 	int i, j;
@@ -86,9 +86,9 @@ static double lambda2(const iapws_phi *phi, double dchi, double eta)	/* mW/K/m *
 	const double xi0 = 0.13;	/* nm */
 	const double gam0 = 0.06;
 
-	double rho = iapws_rho(phi);
-	double t = iapws_t(phi);
-	double delta = rho / IAPWS_RHOC;
+	const double rho = iapws_rho(phi);
+	const double t = iapws_t(phi);
+	const double delta = rho / IAPWS_RHOC;
 
 	if (rho == 0.0 || dchi <= 0.0) return 0.0;
 
@@ -105,8 +105,8 @@ static double lambda2(const iapws_phi *phi, double dchi, double eta)	/* mW/K/m *
 
 double if97_lambda(const iapws_phi *gamma)	/* mW/K/m */
 {
-	double rho = iapws_rho(gamma);
-	double t = iapws_t(gamma);
+	const double rho = iapws_rho(gamma);
+	const double t = iapws_t(gamma);
 
 	const double tr = 1.5 * IAPWS_TC;
 	const double A[6][5] = {
@@ -140,9 +140,8 @@ double if97_lambda(const iapws_phi *gamma)	/* mW/K/m */
 
 double iapws95_lambda(const iapws_phi *phi)	/* mW/K/m */
 {
-	double rho = iapws_rho(phi);
-	double t = iapws_t(phi);
-
+	const double rho = iapws_rho(phi);
+	const double t = iapws_t(phi);
 	const double tr = 1.5 * IAPWS_TC;
 	iapws_phi phir;
 	iapws95_phi(rho, tr, &phir);

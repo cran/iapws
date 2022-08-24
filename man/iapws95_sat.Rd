@@ -66,6 +66,13 @@ iapws95_sat_p(what, p)
 	is shared between the different properties.
 }
 \examples{
-format(iapws95_sat(c("p", "rho", "h", "s"), t = c(275, 450, 625)),
-       scientific = TRUE, digits = 9)
+# IAPWS95 Tab. 8
+tab8 <- iapws95_sat(c("p", "rho", "h", "s"), t = c(275, 450, 625))
+format(tab8, scientific = TRUE, digits = 9)
+\dontshow{
+stopifnot(all.equal(tab8[, "p", "gas", drop = FALSE],
+	  array(c(0.698451167e-3, 0.932203564e0, 0.169082693e2),
+		c(3, 1, 1), dimnames = list(NULL, c("p"), c("gas"))),
+		    tolerance = 2e-9))
+}
 }

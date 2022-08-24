@@ -20,13 +20,12 @@ if97_state(p, t)
 }
 \value{
 	A character vector giving the physical state. One of \code{"solid"},
-	\code{"liquid"}, \code{"gas"}, \code{"supercritical"} or \code{"undef"}.
+	\code{"liquid"}, \code{"gas"}, \code{"supercritical"},
+	\code{"saturated"} or \code{"undef"}.
 }
 \author{
 	Jonathan Debove
 }
 \examples{
-if97_state(.1, 293.15)
-if97_state(.1, 373.15)
-if97_state(23, 650)
+if97_state(c(.1, .1, 23), c(293.15, 373.15, 650))
 }

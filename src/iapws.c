@@ -20,8 +20,9 @@
 
 #include "iapws.h"
 
-int	iapws_nroot_max_iter = 30;
-double	iapws_nroot_tol = 1e-9;
+int	iapws_nroot_maxiter = 100;
+double	iapws_nroot_tolf = 1e-9;
+double	iapws_nroot_tolx = -1.0;
 
 double iapws_t(const iapws_phi *phi)  /* K */
 {

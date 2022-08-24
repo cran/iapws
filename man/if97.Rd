@@ -76,39 +76,74 @@ if97(what, p, t, state = if97_state(p, t))
 \examples{
 what <- c("v", "h", "u", "s", "cp", "w")
 
-# Region 1
-format(if97(what, t = c(300, 300, 500), p = c(3, 80, 3)),
-       scientific = TRUE, digits = 9)
+# Region 1 Tab. 5
+tab5 <- if97(what, t = c(300, 300, 500), p = c(3, 80, 3))
+format(tab5, scientific = TRUE, digits = 9)
 
-# Region 2
-format(if97(what, t = c(300, 700, 700), p = c(3.5e-3, 3.5e-3, 30)),
-       scientific = TRUE, digits = 9)
+# Region 2 Tab. 15
+tab15 <- if97(what, t = c(300, 700, 700), p = c(3.5e-3, 3.5e-3, 30))
+format(tab15, scientific = TRUE, digits = 9)
 
-# Region 2 metastable
-format(if97(what, t = c(450, 440, 450), p = c(1, 1, 1.5), state = "gas"),
-       scientific = TRUE, digits = 9)
+# Region 2 metastable Tab. 18
+tab18 <- if97(what, t = c(450, 440, 450), p = c(1, 1, 1.5), state = "gas")
+format(tab18, scientific = TRUE, digits = 9)
 
-# Region 3
-format(if97(what, t = c(650, 650, 750),
-	    p = c(0.255837018e2, 0.222930643e2, 0.783095639e2)),
-       scientific = TRUE, digits = 9)
+# Region 3 Tab. 33
+tab33 <- if97(what, t = c(650, 650, 750),
+              p = c(0.255837018e2, 0.222930643e2, 0.783095639e2))
+format(tab33, scientific = TRUE, digits = 9)
 
-# Region 5
-format(if97(what, t = c(1500, 1500, 2000), p = c(0.5, 30, 30)),
-       scientific = TRUE, digits = 9)
+# Region 5 Tab. 42
+tab42 <- if97(what, t = c(1500, 1500, 2000), p = c(0.5, 30, 30))
+format(tab42, scientific = TRUE, digits = 9)
+
+\dontshow{
+stopifnot(all.equal(tab5[, "v", drop = FALSE],
+		    matrix(c(0.100215168e-2, 0.971180894e-3, 0.120241800e-2),
+			   3, 1, dimnames = list(NULL, "v")),
+		    tolerance = 2e-9),
+	  all.equal(tab15[, "v", drop = FALSE],
+		    matrix(c(0.394913866e2, 0.923015898e2, 0.542946619e-2),
+			   3, 1, dimnames = list(NULL, "v")),
+		    tolerance = 2e-9),
+	  all.equal(tab18[, "v", drop = FALSE],
+		    matrix(c(0.192516540, 0.186212297, 0.121685206),
+			   3, 1, dimnames = list(NULL, "v")),
+		    tolerance = 2e-9),
+	  all.equal(tab33[, "v", drop = FALSE],
+		    matrix(1 / c(500, 200, 500),
+			   3, 1, dimnames = list(NULL, "v")),
+		    tolerance = 2e-8),
+	  all.equal(tab42[, "v", drop = FALSE],
+		    matrix(c(0.138455090e1, 0.230761299e-1, 0.311385219e-1),
+			   3, 1, dimnames = list(NULL, "v")),
+		    tolerance = 2e-9))
+}
 
 # Viscosity and thermal conductivity
 what <- c("lambda", "eta")
-## Region 1
-format(if97(what, p = c(20, 50), t = c(620, 620)),
-       scientific = TRUE, digits = 9)
 
-## Region 2
-format(if97(what, p = c(0.3, 50), t = c(650, 800)),
-       scientific = TRUE, digits = 9)
+# Region 1 Tab. 7
+tab7 <- if97(what, p = c(20, 50), t = c(620, 620))
+format(tab7, scientific = TRUE, digits = 9)
 
-## Region 3
-#format(if97_rhot(c("lambda", "rho", "cp", "cv", "eta"),
+# Region 2 Tab. 8
+tab8 <- if97(what, p = c(0.3, 50), t = c(650, 800))
+format(tab8, scientific = TRUE, digits = 9)
+
+## Region 3 Tab. 9
+#tab9 <- if97_rhot(c("lambda", "rho", "cp", "cv", "eta"),
 #	    rho = c(0.3, 50), t = c(222, 322)),
-#       scientific = TRUE, digits = 9)
+#format(tab9, scientific = TRUE, digits = 9)
+
+\dontshow{
+stopifnot(all.equal(tab7[, "lambda", drop = FALSE],
+		    matrix(c(0.481485195e3, 0.545038940e3),
+			   2, 1, dimnames = list(NULL, "lambda")),
+		    tolerance = 2e-9),
+	  all.equal(tab8[, "lambda", drop = FALSE],
+		    matrix(c(0.522311024e2, 0.177709914e3),
+			   2, 1, dimnames = list(NULL, "lambda")),
+		    tolerance = 3e-9))
+}
 }

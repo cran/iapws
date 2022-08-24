@@ -17,7 +17,7 @@
 iapws95 <- function(what, rho, t)
 {
 	w <- .check_what(what)
-	x <- callWrapper("R_iapws95", w = w, r = rho, t = t,
+	x <- callWrapper(R_iapws95, w = w, r = rho, t = t,
 			 what = c("integer", "double", "double"))
 	colnames(x) <- what
 	x
@@ -27,7 +27,7 @@ iapws95_pt <- function(what, p, t, state = iapws95_state(p, t))
 {
 	w <- .check_what(what)
 	s <- .check_state(state)
-	x <- callWrapper("R_iapws95_pt", w = w, p = p, t = t, s = s,
+	x <- callWrapper(R_iapws95_pt, w = w, p = p, t = t, s = s,
 			 what = c("integer", "double", "double", "integer"))
 	colnames(x) <- what
 	x
@@ -36,7 +36,7 @@ iapws95_pt <- function(what, p, t, state = iapws95_state(p, t))
 iapws95_sat <- function(what, t)
 {
 	w <- .check_what(what)
-	x <- callWrapper("R_iapws95_sat", w = w, t = t,
+	x <- callWrapper(R_iapws95_sat, w = w, t = t,
 			 what = c("integer", "double"))
 	dimnames(x) <- list(NULL, what, c("liquid", "gas"))
 	x
@@ -45,13 +45,18 @@ iapws95_sat <- function(what, t)
 iapws95_sat_p <- function(what, p)
 {
 	w <- .check_what(what)
-	x <- callWrapper("R_iapws95_sat_p", w = w, p = p,
+	x <- callWrapper(R_iapws95_sat_p, w = w, p = p,
 			 what = c("integer", "double"))
 	dimnames(x) <- list(NULL, what, c("liquid", "gas"))
 	x
 }
 
 iapws95_state <- function(p, t) {
-	s <- callWrapper("R_iapws95_state", p = p, t = t)
+	s <- callWrapper(R_iapws95_state, p = p, t = t)
+	names(.IAPWS_STATE)[match(s, .IAPWS_STATE)]
+}
+
+iapws95_state_rhot <- function(rho, t) {
+	s <- callWrapper(R_iapws95_state_rhot, rho = rho, t = t)
 	names(.IAPWS_STATE)[match(s, .IAPWS_STATE)]
 }

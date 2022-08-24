@@ -17,24 +17,24 @@
 #IF97_REGION <- c(WATER = 1L, STEAM = 2L, SUPER = 3L, SAT = 4L, GAZ = 5L)
 
 if97_region <- function(p, t)
-	callWrapper("R_if97_region", p = p, t = t)
+	callWrapper(R_if97_region, p = p, t = t)
 
 if97_state <- function(p, t) {
-	s <- callWrapper("R_if97_state", p = p, t = t)
+	s <- callWrapper(R_if97_state, p = p, t = t)
 	names(.IAPWS_STATE)[match(s, .IAPWS_STATE)]
 }
 
 if97_psat <- function(t)
-	callWrapper("R_if97_psat", t = t)
+	callWrapper(R_if97_psat, t = t)
 
 if97_tsat <- function(p)
-	callWrapper("R_if97_tsat", p = p)
+	callWrapper(R_if97_tsat, p = p)
 
 if97 <- function(what, p, t, state = if97_state(p, t))
 {
 	w <- .check_what(what)
 	s <- .check_state(state)
-	x <- callWrapper("R_if97", w = w, p = p, t = t, s = s,
+	x <- callWrapper(R_if97, w = w, p = p, t = t, s = s,
 			 what = c("integer", "double", "double", "integer"))
 	colnames(x) <- what
 	x
