@@ -66,12 +66,12 @@ static double lambda01(double rho, double t)	/* mW/K/m */
 	int i, j;
 
 	for (i = 0; i < SIZE0; ++i) {
-		lambda0 += coef0[i] * pow_di(tau, i);
+		lambda0 += coef0[i] * POWINT(tau, i);
 	}
 	for (i = 0; i < SIZE1; ++i) {
-		double tm1i = pow_di(tau - 1.0, i);
+		double tm1i = POWINT(tau - 1.0, i);
 		for (j = 0; j < SIZE2; ++j) {
-			lambda1 += coef1[i][j] * tm1i * pow_di(delta - 1.0, j);
+			lambda1 += coef1[i][j] * tm1i * POWINT(delta - 1.0, j);
 		}
 	}
 	return 1.0 / sqrt(tau) / lambda0 * exp(delta * lambda1);
@@ -131,7 +131,7 @@ double if97_lambda(const iapws_phi *gamma)	/* mW/K/m */
 	else if (rhob <= 1.242236025) j = 2;
 	else if (rhob <= 1.863354037) j = 3;
 	else j = 4;
-	for (i = 0; i < 6; ++i) invzr += A[i][j] * pow_di(rhob, i);
+	for (i = 0; i < 6; ++i) invzr += A[i][j] * POWINT(rhob, i);
 
 	double dchi = (iapws_chit(gamma) * IAPWS_PC * rhob -
 			tr / (t * invzr)) * rhob;

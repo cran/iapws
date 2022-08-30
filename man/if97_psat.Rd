@@ -22,8 +22,8 @@ if97_tsat(p)
 }
 \value{
 	A numeric vector containing the saturation-pressure (MPa) or the
-	saturation-temperature (K). Return 0 for inputs outside of the range
-	of validity.
+	saturation-temperature (K). Return \code{NA} for inputs outside of the
+	range of validity.
 }
 \references{
 	International Association for the Properties of Water and Steam,

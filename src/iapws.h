@@ -20,8 +20,8 @@
 #define IAPWS_H
 
 #include <Rmath.h>
-#define pow_di R_pow_di
 #define POW2(x) ((x) * (x))
+#define POWINT(x, y) R_pow_di((x), (y))
 
 #define IAPWS_TC	647.096		/* K	   */
 #define IAPWS_RHOC	322.0		/* kg/m3   */

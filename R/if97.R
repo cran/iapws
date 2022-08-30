@@ -24,11 +24,17 @@ if97_state <- function(p, t) {
 	names(.IAPWS_STATE)[match(s, .IAPWS_STATE)]
 }
 
-if97_psat <- function(t)
-	callWrapper(R_if97_psat, t = t)
+if97_psat <- function(t) {
+	x <- callWrapper(R_if97_psat, t = t)
+	is.na(x) <- x == 0
+	x
+}
 
-if97_tsat <- function(p)
-	callWrapper(R_if97_tsat, p = p)
+if97_tsat <- function(p) {
+	x <- callWrapper(R_if97_tsat, p = p)
+	is.na(x) <- x == 0
+	x
+}
 
 if97 <- function(what, p, t, state = if97_state(p, t))
 {

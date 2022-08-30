@@ -25,7 +25,6 @@
 #include <math.h>
 
 #include "if97.h"
-#include "sat.h"
 #include "nroot.h"
 
 /* Static function forward declarations */
@@ -106,20 +105,19 @@ double if97_psat(double t)
 	return 0.0;
 }
 
+#include "sat.h"
 int if97_gamma(double p, double t, iapws_state_id state, iapws_phi *gamma)
 {
 	if97_region_id reg = if97_region(p, t);
 	int meta = 0;
 	int err = 0;
-	double rho = IAPWS_RHOC * 2.0;
+	double rho = 650.0;
 
 	if (state == IAPWS_LIQUID) {
 		if (reg == IF97_WATER) {
 		} else if (reg == IF97_STEAM) {
 			reg = IF97_WATER;
 		} else if (reg == IF97_SUPER) {
-			rho = sat_rhol(t) * 1.3;
-			if (rho == 0.0) rho = IAPWS_RHOC * 2.0;
 		} else {
 			reg = IF97_UNDEF;
 		}
@@ -129,8 +127,7 @@ int if97_gamma(double p, double t, iapws_state_id state, iapws_phi *gamma)
 			meta = (p < 10.0 ? 1 : 0);
 			reg = IF97_STEAM;
 		} else if (reg == IF97_SUPER) {
-			rho = sat_rhog(t) * 0.7;
-			if (rho == 0.0) rho = IAPWS_RHOC * 0.5;
+			rho = 150.0;
 		} else if (reg == IF97_GAS) {
 		} else {
 			reg = IF97_UNDEF;
@@ -229,7 +226,7 @@ static void gamma_r1(double p, double t, iapws_phi *gamma)
 	gamma->d20 = 0.0;
 	gamma->d02 = 0.0;
 	for (i = 0; i < SIZE; ++i) {
-		xn = coef[i].n * pow_di(xp, coef[i].I) * pow_di(xt, coef[i].J);
+		xn = coef[i].n * POWINT(xp, coef[i].I) * POWINT(xt, coef[i].J);
 		gamma->d00 += xn;
 		gamma->d10 += xn * coef[i].I;
 		gamma->d01 += xn * coef[i].J;
@@ -364,7 +361,7 @@ static void gamma_r2(double p, double t, int meta, iapws_phi *gamma)
 	gamma->d20 = -1.0;
 	gamma->d02 = 0.0;
 	for (i = n0; i < n1; ++i) {
-		xn = coef[i].n * pow_di(tau, coef[i].J);
+		xn = coef[i].n * POWINT(tau, coef[i].J);
 		gamma->d00 += xn;
 		gamma->d01 += xn * coef[i].J;
 		gamma->d02 += xn * coef[i].J * (coef[i].J - 1);
@@ -373,7 +370,7 @@ static void gamma_r2(double p, double t, int meta, iapws_phi *gamma)
 	/* gamma_r */
 	iapws_phi gamma_r = { IAPWS_GAMMA };
 	for (i = n1; i < n2; ++i) {
-		xn = coef[i].n * pow_di(pi, coef[i].I) * pow_di(xt, coef[i].J);
+		xn = coef[i].n * POWINT(pi, coef[i].I) * POWINT(xt, coef[i].J);
 		gamma_r.d00 += xn;
 		gamma_r.d10 += xn * coef[i].I;
 		gamma_r.d01 += xn * coef[i].J;
@@ -457,7 +454,7 @@ static void phi_r3(double rho, double t, iapws_phi *phi)
 	phi->d02 = 0.0;
 
 	for (i = 1; i < SIZE; ++i) {
-		xn = coef[i].n * pow_di(delta, coef[i].I) * pow_di(tau, coef[i].J);
+		xn = coef[i].n * POWINT(delta, coef[i].I) * POWINT(tau, coef[i].J);
 		phi->d00 += xn;
 		phi->d10 += xn * coef[i].I;
 		phi->d01 += xn * coef[i].J;
@@ -560,7 +557,7 @@ static void gamma_r5(double p, double t, iapws_phi *gamma)
 	gamma->d20 = -1.0;
 	gamma->d02 = 0.0;
 	for (i = 0; i < SIZE1; ++i) {
-		xn = coef[i].n * pow_di(tau, coef[i].J);
+		xn = coef[i].n * POWINT(tau, coef[i].J);
 		gamma->d00 += xn;
 		gamma->d01 += xn * coef[i].J;
 		gamma->d02 += xn * coef[i].J * (coef[i].J - 1);
@@ -568,7 +565,7 @@ static void gamma_r5(double p, double t, iapws_phi *gamma)
 
 	/* gamma_r */
 	for (i = SIZE1; i < SIZE2; ++i) {
-		xn = coef[i].n * pow_di(pi, coef[i].I) * pow_di(tau, coef[i].J);
+		xn = coef[i].n * POWINT(pi, coef[i].I) * POWINT(tau, coef[i].J);
 		gamma->d00 += xn;
 		gamma->d10 += xn * coef[i].I;
 		gamma->d01 += xn * coef[i].J;

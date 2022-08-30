@@ -29,7 +29,7 @@ static inline double sumpow(double x, int n, const double a[], const int I[])
 {
 	double ans = 0.0;
 	int i;
-	for (i = 0; i < n; ++i) ans += a[i] * pow_di(x, I[i]);
+	for (i = 0; i < n; ++i) ans += a[i] * POWINT(x, I[i]);
 	return ans;
 }
 
@@ -82,22 +82,22 @@ static double alpha(double theta)
 {
 	double xt = sqrt(theta);
 	return -1135.905627715 +
-		d[0] * pow_di(theta, -19) +
+		d[0] * POWINT(theta, -19) +
 		d[1] * theta +
-		d[2] * pow_di(theta, 4) * xt +
-		d[3] * pow_di(theta, 5) +
-		d[4] * pow_di(theta, 54) * xt;
+		d[2] * POWINT(theta, 4) * xt +
+		d[3] * POWINT(theta, 5) +
+		d[4] * POWINT(theta, 54) * xt;
 }
 
 static double phi(double theta)
 {
 	double xt = sqrt(theta);
 	return 2319.5246 +
-		d[0] * (19.0/20.0) * pow_di(theta, -20) +
+		d[0] * (19.0/20.0) * POWINT(theta, -20) +
 		d[1] * log(theta) +
-		d[2] * (9.0/7.0) * pow_di(theta, 3) * xt +
-		d[3] * (5.0/4.0) * pow_di(theta, 4) +
-		d[4] * (109.0/107.0) * pow_di(theta, 53) * xt;
+		d[2] * (9.0/7.0) * POWINT(theta, 3) * xt +
+		d[3] * (5.0/4.0) * POWINT(theta, 4) +
+		d[4] * (109.0/107.0) * POWINT(theta, 53) * xt;
 }
 */
 

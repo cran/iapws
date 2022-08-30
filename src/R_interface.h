@@ -22,6 +22,8 @@
 #include <Rinternals.h>
 #include <R_ext/Itermacros.h>
 
+#define NINTERRUPT	1000000U
+
 #define RDAT_(x)	RDAT_##x
 #define RDAT_int	INTEGER
 #define RDAT_double	REAL
@@ -36,7 +38,7 @@
 		SEXP y = PROTECT(allocVector(RSXP_(ty), n));  \
 		tx1 *xx1 = RDAT_(tx1)(x1);  \
 		ty *xy = RDAT_(ty)(y);  \
-		R_ITERATE(n, i, xy[i] = FUN(xx1[i]););  \
+		R_ITERATE_CHECK(NINTERRUPT, n, i, xy[i] = FUN(xx1[i]););  \
 		UNPROTECT(1);  \
 		return y;  \
 	}
@@ -50,7 +52,7 @@
 		tx1 *xx1 = RDAT_(tx1)(x1);  \
 		tx2 *xx2 = RDAT_(tx2)(x2);  \
 		ty *xy = RDAT_(ty)(y);  \
-		MOD_ITERATE2(n, n1, n2, i, i1, i2,  \
+		MOD_ITERATE2_CHECK(NINTERRUPT, n, n1, n2, i, i1, i2,  \
 				xy[i] = FUN(xx1[i1], xx2[i2]););  \
 		UNPROTECT(1);  \
 		return y;  \
@@ -68,7 +70,7 @@
 		tx2 *xx2 = RDAT_(tx2)(x2);  \
 		tx3 *xx3 = RDAT_(tx3)(x3);  \
 		ty *xy = RDAT_(ty)(y);  \
-		MOD_ITERATE3(n, n1, n2, n3, i, i1, i2, i3, \
+		MOD_ITERATE3_CHECK(NINTERRUPT, n, n1, n2, n3, i, i1, i2, i3, \
 				xy[i] = FUN(xx1[i1], xx2[i2], xx3[i3]););  \
 		UNPROTECT(1);  \
 		return y;  \

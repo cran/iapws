@@ -63,7 +63,7 @@ SEXP R_if97(SEXP w, SEXP p, SEXP t, SEXP s)
 
 	iapws_phi gamma;
 	int offset;
-	MOD_ITERATE3(n, np, nt, ns, i, ip, it, is,
+	MOD_ITERATE3_CHECK(NINTERRUPT, n, np, nt, ns, i, ip, it, is,
 		if (if97_gamma(xp[ip], xt[it], xs[is], &gamma) == 0) {
 			for (iw = 0, offset = 0; iw < nw; iw++, offset += n) {
 				xd[i + offset] = if97_a[xw[iw]](&gamma);
@@ -112,7 +112,7 @@ SEXP R_iapws95(SEXP w, SEXP r, SEXP t)
 
 	iapws_phi phi;
 	int offset;
-	MOD_ITERATE2(n, nr, nt, i, ir, it,
+	MOD_ITERATE2_CHECK(NINTERRUPT, n, nr, nt, i, ir, it,
 		if (iapws95_phi(xr[ir], xt[it], &phi) == 0) {
 			for (iw = 0, offset = 0; iw < nw; iw++, offset += n) {
 				xd[i + offset] = iapws95_a[xw[iw]](&phi);
@@ -146,7 +146,7 @@ SEXP R_iapws95_pt(SEXP w, SEXP p, SEXP t, SEXP s)
 
 	iapws_phi phi;
 	int offset;
-	MOD_ITERATE3(n, np, nt, ns, i, ip, it, is,
+	MOD_ITERATE3_CHECK(NINTERRUPT, n, np, nt, ns, i, ip, it, is,
 		if (iapws95_phi_pt(xp[ip], xt[it], xs[is], &phi) == 0) {
 			for (iw = 0, offset = 0; iw < nw; iw++, offset += n) {
 				xd[i + offset] = iapws95_a[xw[iw]](&phi);
@@ -175,7 +175,7 @@ SEXP R_iapws95_sat(SEXP w, SEXP t)
 
 	iapws_phi phil, phig;
 	int offset;
-	R_ITERATE(nt, it,
+	R_ITERATE_CHECK(NINTERRUPT, nt, it,
 		if (iapws95_sat(xt[it], &phil, &phig) == 0) {
 			for (iw = 0, offset = 0; iw < nw; iw++, offset += nt) {
 				xd[it + offset] = iapws95_a[xw[iw]](&phil);
@@ -206,7 +206,7 @@ SEXP R_iapws95_sat_p(SEXP w, SEXP t)
 
 	iapws_phi phil, phig;
 	int offset;
-	R_ITERATE(nt, it,
+	R_ITERATE_CHECK(NINTERRUPT, nt, it,
 		if (iapws95_sat_p(xt[it], &phil, &phig) == 0) {
 			for (iw = 0, offset = 0; iw < nw; iw++, offset += nt) {
 				xd[it + offset] = iapws95_a[xw[iw]](&phil);

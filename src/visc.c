@@ -76,11 +76,11 @@ static double eta01(double rho, double t)
 	int i;
 
 	for (i = 0; i < SIZE0; ++i) {
-		eta0 += coef0[i] * pow_di(tau, i);
+		eta0 += coef0[i] * POWINT(tau, i);
 	}
 	for (i = 0; i < SIZE1; ++i) {
-		eta1 += coef1[i].H * pow_di(tau - 1.0, coef1[i].i) *
-			pow_di(delta - 1.0, coef1[i].j);
+		eta1 += coef1[i].H * POWINT(tau - 1.0, coef1[i].i) *
+			POWINT(delta - 1.0, coef1[i].j);
 	}
 	return 100.0 / sqrt(tau) / eta0 * exp(delta * eta1);
 }
@@ -117,14 +117,14 @@ double iapws95_eta(const iapws_phi *phi)  /* µPa.s */
 
 		double y;
 		if (xi <= 0.3817016416) {
-			y = 0.2 * xic * pow_di(xid, 5) * (1.0 - xic + POW2(xic) -
+			y = 0.2 * xic * POWINT(xid, 5) * (1.0 - xic + POW2(xic) -
 					765.0 / 504.0 * POW2(xid));
 		} else {
 			double psid = acos(1.0 / sqrt(1.0 + POW2(xid)));
 			double w = sqrt(fabs((xic - 1.0) / (xic + 1.0))) *
 				tan(psid * 0.5);
 			double Lw = xic > 1 ?
-				log((1.0 + w)/(1.0 - w)) :
+				log((1.0 + w) / (1.0 - w)) :
 				atan(fabs(w)) * 2.0;
 			double invxic = 1.0 / xic;
 			y = sin(psid * 3.0) / 12.0 -

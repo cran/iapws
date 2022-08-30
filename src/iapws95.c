@@ -200,8 +200,8 @@ static void calc_psi(int i, double delta, double tau, iapws_phi *psi)
 int iapws95_phi(double rho, double t, iapws_phi *phi)
 {
 	int i;
-	double delta = rho / IAPWS_RHOC;
-	double tau = IAPWS_TC / t;
+	const double delta = rho / IAPWS_RHOC;
+	const double tau = IAPWS_TC / t;
 	double xn, egt, dc, tc;
 	iapws_phi Db, psi;
 
@@ -228,7 +228,7 @@ int iapws95_phi(double rho, double t, iapws_phi *phi)
 	/* phir */
 	for (i = 0; i < SIZE1; ++i) {
 		xn = coef1[i].n *
-			pow_di(delta, coef1[i].d) * pow(tau, coef1[i].t);
+			POWINT(delta, coef1[i].d) * pow(tau, coef1[i].t);
 		phi->d00 += xn;
 		phi->d10 += xn * coef1[i].d; 
 		phi->d01 += xn * coef1[i].t;
@@ -237,9 +237,9 @@ int iapws95_phi(double rho, double t, iapws_phi *phi)
 		phi->d02 += xn * coef1[i].t * (coef1[i].t - 1);
 	}
 	for (i = 0; i < SIZE2; ++i) {
-		dc = pow_di(delta, coef2[i].c);
+		dc = POWINT(delta, coef2[i].c);
 		xn = coef2[i].n * exp(-dc) *
-			pow_di(delta, coef2[i].d) * pow_di(tau, coef2[i].t);
+			POWINT(delta, coef2[i].d) * POWINT(tau, coef2[i].t);
 		phi->d00 += xn;
 		phi->d10 += xn * (coef2[i].d - coef2[i].c * dc);
 		phi->d01 += xn * coef2[i].t;
@@ -253,7 +253,7 @@ int iapws95_phi(double rho, double t, iapws_phi *phi)
 		dc = delta - coef3[i].eps;
 		tc = tau - coef3[i].gamma;
 		xn = coef3[i].n *
-			pow_di(delta, coef3[i].d) * pow_di(tau, coef3[i].t) *
+			POWINT(delta, coef3[i].d) * POWINT(tau, coef3[i].t) *
 			exp(-coef3[i].alpha * dc * dc -coef3[i].beta * tc * tc);
 		phi->d00 += xn;
 		phi->d10 += xn * (coef3[i].d - delta * 2 * coef3[i].alpha * dc);
