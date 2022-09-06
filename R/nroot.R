@@ -14,38 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#IF97_REGION <- c(WATER = 1L, STEAM = 2L, SUPER = 3L, SAT = 4L, GAZ = 5L)
-
-if97_region <- function(p, t)
-	callWrapper(C_if97_region, p = p, t = t)
-
-if97_state <- function(p, t)
+.nroot_control <- function(trace = 0L, maxit = 100L,
+			   abstol = 1e-9, reltol = 1e-9)
 {
-	s <- callWrapper(C_if97_state, p = p, t = t)
-	names(.IAPWS_STATE)[match(s, .IAPWS_STATE)]
-}
-
-if97_psat <- function(t)
-{
-	x <- callWrapper(C_if97_psat, t = t)
-	is.na(x) <- x == 0
-	x
-}
-
-if97_tsat <- function(p)
-{
-	x <- callWrapper(C_if97_tsat, p = p)
-	is.na(x) <- x == 0
-	x
-}
-
-if97 <- function(what, p, t, state = if97_state(p, t))
-{
-	w <- .check_what(what)
-	s <- .check_state(state)
-	x <- callWrapper(C_if97, w = w, p = p, t = t, s = s,
-			 what = c("integer", "double", "double", "integer"))
-	colnames(x) <- what
-	x
+	invisible(callWrapper(C_nroot_control, trace, maxit, abstol, reltol,
+			      what = c("integer", "integer",
+				       "double", "double")))
 }
 

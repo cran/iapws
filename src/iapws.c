@@ -20,10 +20,6 @@
 
 #include "iapws.h"
 
-int	iapws_nroot_maxiter = 100;
-double	iapws_nroot_tolf = 1e-9;
-double	iapws_nroot_tolx = -1.0;
-
 double iapws_t(const iapws_phi *phi)  /* K */
 {
 	return phi->t;
@@ -233,8 +229,3 @@ double iapws_chit(const iapws_phi *phi)  /* 1/MPa */
 	}
 }
 
-double iapws_sigma(const iapws_phi *phi)  /* mN/m */
-{
-	double t  = 1.0 - phi->t / IAPWS_TC;
-	return pow(t, 1.256) * (1.0 - t * 0.625) * 235.8;
-}

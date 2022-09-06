@@ -17,20 +17,19 @@
  */
 
 /* International Association for the Properties of Water and Steam,
- * IAPWS SR1-86(1992), Revised Supplementary Release on Saturation of Ordinary
- * Water Substance
+ * IAPWS SR1-86(1992), Revised Supplementary Release on Saturation of
+ * Ordinary Water Substance
  */
 
 #include <math.h>
 
 #include "iapws.h"
 
-static inline double sumpow(double x, int n, const double a[], const int I[])
+static inline double sum6pow(const double x, const double a[], const int I[])
 {
-	double ans = 0.0;
-	int i;
-	for (i = 0; i < n; ++i) ans += a[i] * POWINT(x, I[i]);
-	return ans;
+	return  a[0] * POWINT(x, I[0]) + a[1] * POWINT(x, I[1]) +
+		a[2] * POWINT(x, I[2]) + a[3] * POWINT(x, I[3]) +
+		a[4] * POWINT(x, I[4]) + a[5] * POWINT(x, I[5]);
 }
 
 double sat_p(double t)
@@ -41,8 +40,8 @@ double sat_p(double t)
 		 22.6807411, -15.9618719,  1.80122502,
 	};
 	double theta = t / IAPWS_TC;
-	if (t < 273.15 || t > IAPWS_TC) return 0.0;
-	return exp(sumpow(sqrt(1.0 - theta), 6, a, I) / theta) * IAPWS_PC;
+	if (t < 273.16 || t > IAPWS_TC) return 0.0;
+	return exp(sum6pow(sqrt(1.0 - theta), a, I) / theta) * IAPWS_PC;
 }
 
 double sat_rhol(double t)
@@ -53,8 +52,8 @@ double sat_rhol(double t)
 		-1.75493479, -45.5170352, -6.74694450e5,
 	};
 	double theta = t / IAPWS_TC;
-	if (t < 273.15 || t > IAPWS_TC) return 0.0;
-	return (sumpow(cbrt(1.0 - theta), 6, b, I) + 1.0) * IAPWS_RHOC;
+	if (t < 273.16 || t > IAPWS_TC) return 0.0;
+	return (sum6pow(cbrt(1.0 - theta), b, I) + 1.0) * IAPWS_RHOC;
 }
 
 double sat_rhog(double t)
@@ -65,39 +64,7 @@ double sat_rhog(double t)
 		-17.2991605, -44.7586581, -63.9201063,
 	};
 	double theta = t / IAPWS_TC;
-	if (t < 273.15 || t > IAPWS_TC) return 0.0;
-	return exp(sumpow(pow(1.0 - theta, 1.0 / 6.0), 6, c, I)) * IAPWS_RHOC;
+	if (t < 273.16 || t > IAPWS_TC) return 0.0;
+	return exp(sum6pow(POW(1.0 - theta, 1.0 / 6.0), c, I)) * IAPWS_RHOC;
 }
-
-/*
-static const int d[5] = {
-	-5.65134998e-8,
-	 2690.66631,
-	 127.287297,
-	-135.003439,
-	 0.981825814,
-};
-
-static double alpha(double theta)
-{
-	double xt = sqrt(theta);
-	return -1135.905627715 +
-		d[0] * POWINT(theta, -19) +
-		d[1] * theta +
-		d[2] * POWINT(theta, 4) * xt +
-		d[3] * POWINT(theta, 5) +
-		d[4] * POWINT(theta, 54) * xt;
-}
-
-static double phi(double theta)
-{
-	double xt = sqrt(theta);
-	return 2319.5246 +
-		d[0] * (19.0/20.0) * POWINT(theta, -20) +
-		d[1] * log(theta) +
-		d[2] * (9.0/7.0) * POWINT(theta, 3) * xt +
-		d[3] * (5.0/4.0) * POWINT(theta, 4) +
-		d[4] * (109.0/107.0) * POWINT(theta, 53) * xt;
-}
-*/
 

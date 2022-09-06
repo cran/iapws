@@ -16,10 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef NDEBUG
-#	include <stdio.h>
-#endif
-
 #ifdef _WIN32
 #	include <malloc.h>
 #	define alloca _alloca
@@ -29,13 +25,25 @@
 
 #include <math.h>
 
+#include <R_ext/Print.h>
 #include <R_ext/BLAS.h>
 #include <R_ext/Lapack.h>
 
 #include "nroot.h"
 
-int nroot(root_fun fun, double *x, void *prms,
-		double *tolf, double *tolx, int *maxiter)
+int nroot_verbose = 0;
+int nroot_maxiter = 100;
+double nroot_tolf = 1e-9;
+double nroot_tolx = 1e-9;
+
+void nroot_log(int iter, double errf, double errx)
+{
+	REprintf("nroot: iter=%d epsf=%.8e epsx=%.8e\n",
+			iter, errf, errx);
+}
+
+int nroot1(root_fun fun, double *x, void *prms,
+		double *tolf, double *tolx, int *maxiter, int trace)
 {
 	const double epsf = *tolf, epsx = *tolx;
 	double fx, dfx, dx;
@@ -47,19 +55,18 @@ int nroot(root_fun fun, double *x, void *prms,
 		if (dfx == 0.0) return -2;
 
 		dx = -fx / dfx;
-		*tolx = fabs(dx);
+		*tolx = fabs(dx) / fabs(*x);
 		if (*tolx <= epsx) return 0;
-#ifndef NDEBUG
-		fprintf(stderr, "nroot: iter=%d epsf=%.8e epsx=%.8e\n",
-				*maxiter, *tolf, *tolx);
-#endif
+
+		if (trace) nroot_log(*maxiter, *tolf, *tolx);
+
 		*x += dx;
 	}
 	return -1;
 }
 
 int nroot2(root_fun fun, double *x, void *prms,
-		double *tolf, double *tolx, int *maxiter)
+		double *tolf, double *tolx, int *maxiter, int trace)
 {
 	const double epsf = *tolf, epsx = *tolx;
 	double fx[2], dfx[4], dx[2];
@@ -75,12 +82,11 @@ int nroot2(root_fun fun, double *x, void *prms,
 
 		dx[0] = -(dfx[3] * fx[0] - dfx[2] * fx[1]) / det;
 		dx[1] = +(dfx[1] * fx[0] - dfx[0] * fx[1]) / det;
-		*tolx = fabs(dx[0]) + fabs(dx[1]);
+		*tolx = (fabs(dx[0]) + fabs(dx[1]))/(fabs(x[0]) + fabs(x[1]));
 		if (*tolx <= epsx) return 0;
-#ifndef NDEBUG
-		fprintf(stderr, "nroot: iter=%d epsf=%.8e epsx=%.8e\n",
-				*maxiter, *tolf, *tolx);
-#endif
+
+		if (trace) nroot_log(*maxiter, *tolf, *tolx);
+
 		x[0] += dx[0];
 		x[1] += dx[1];
 	}
@@ -88,7 +94,7 @@ int nroot2(root_fun fun, double *x, void *prms,
 }
 
 int nrootn(int n, root_fun fun, double *x, void *prms,
-		double *tolf, double *tolx, int *maxiter)
+		double *tolf, double *tolx, int *maxiter, int trace)
 {
 	const double epsf = *tolf, epsx = *tolx;
 	double *fx, *dfx;
@@ -113,11 +119,47 @@ int nrootn(int n, root_fun fun, double *x, void *prms,
 		F77_NAME(dgesv)(&n, &i1, dfx, &n, ipiv, fx, &n, &info);
 		if (info != 0) return -2;
 
-		*tolx = F77_NAME(dasum)(&n, fx, &i1);
+		*tolx = F77_NAME(dasum)(&n, fx, &i1) /
+			F77_NAME(dasum)(&n, x, &i1);
 		if (*tolx <= epsx) return 0;
+
+		if (trace) nroot_log(*maxiter, *tolf, *tolx);
 
 		F77_NAME(daxpy)(&n, &d1, fx, &i1, x, &i1);
 	}
 
 	return -1;
 }
+
+int sroot(root_fun fun, double *x, void *prms,
+		double *tolf, double *tolx, int *maxiter, int trace)
+{
+	const double epsf = *tolf, epsx = *tolx;
+	double fx, dfx, dx, fx0;
+
+	fun(x, prms, &fx0, &dfx);
+	*tolf = fabs(fx0);
+	if (*tolf <= epsf) return 0;
+	dx = epsx;
+	*x += dx;
+
+	while ((*maxiter)--) {
+		fun(x, prms, &fx, &dfx);
+		*tolf = fabs(fx);
+		if (*tolf <= epsf) return 0;
+
+		dfx = fx - fx0;
+		if (dfx == 0.0) return -2;
+
+		dx *= -fx / dfx;
+		*tolx = fabs(dx) / fabs(*x);
+		if (*tolx <= epsx) return 0;
+
+		if (trace) nroot_log(*maxiter, *tolf, *tolx);
+
+		*x += dx;
+		fx0 = fx;
+	}
+	return -1;
+}
+

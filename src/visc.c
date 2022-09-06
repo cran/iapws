@@ -111,7 +111,7 @@ double iapws95_eta(const iapws_phi *phi)  /* µPa.s */
 		IAPWS_PC * POW2(rho / IAPWS_RHOC);
 
 	if (dchi > 0.0) {
-		double xi = xi0 * pow(dchi / gam0, nu / gam);
+		double xi = xi0 * POW(dchi / gam0, nu / gam);
 		double xic = qc * xi;
 		double xid = qd * xi;
 
@@ -131,7 +131,7 @@ double iapws95_eta(const iapws_phi *phi)  /* µPa.s */
 				sin(psid * 2.0) * .25 * invxic +
 				sin(psid) * (POW2(invxic) - 1.25) -
 				invxic * (psid * (POW2(invxic) - 1.5) -
-				Lw * pow(fabs(POW2(xic) - 1.0), 1.5) *
+				Lw * POW(fabs(POW2(xic) - 1.0), 1.5) *
 				POW2(invxic));
 		}
 		eta *= exp(x * y);

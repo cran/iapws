@@ -16,23 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef IAPWS_NROOT_H
-#define IAPWS_NROOT_H
+/* International Association for the Properties of Water and Steam,
+ * IAPWS R1-76(2014), Revised Release on Surface Tension of Ordinary Water
+ * Substance (2014)
+ */
 
-extern int nroot_verbose;
-extern int nroot_maxiter;
-extern double nroot_tolf;
-extern double nroot_tolx;
+#include "iapws.h"
 
-typedef void root_fun(double *x, void *prms, double *fx, double *dfx);
-int nroot1(root_fun fun, double *x, void *prms,
-		double *tolf, double *tolx, int *maxiter, int trace);
-int nroot2(root_fun fun, double *x, void *prms,
-		double *tolf, double *tolx, int *maxiter, int trace);
-int nrootn(int n, root_fun fun, double *x, void *prms,
-		double *tolf, double *tolx, int *maxiter, int trace);
+static double surf(double t)
+{
+	t  = 1.0 - t / IAPWS_TC;
+	return POW(t, 1.256) * (1.0 - t * 0.625) * 235.8;
+}
 
-int sroot(root_fun fun, double *x, void *prms,
-		double *tolf, double *tolx, int *maxiter, int trace);
-
-#endif
+double iapws_sigma(const iapws_phi *phi)  /* mN/m */
+{
+	return surf(iapws_t(phi));
+}

@@ -1,4 +1,4 @@
-\name{if97_psat}
+\name{if97_sat}
 \alias{if97_psat}
 \alias{if97_tsat}
 \title{
@@ -13,12 +13,8 @@ if97_psat(t)
 if97_tsat(p)
 }
 \arguments{
-  \item{t}{
-	  a numeric vector giving the temperature values in K.
-  }
-  \item{p}{
-	  a numeric vector giving the pressure values in MPa.
-  }
+	\item{t}{a numeric vector giving the temperature values in K.}
+	\item{p}{a numeric vector giving the pressure values in MPa.}
 }
 \value{
 	A numeric vector containing the saturation-pressure (MPa) or the

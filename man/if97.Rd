@@ -46,6 +46,8 @@ if97(what, p, t, state = if97_state(p, t))
 		\item \code{"w"}: the speed of sound in m/s.
 		\item \code{"eta"}: the dynamic viscosity in \eqn{10^{-6}}Pa.s.
 		\item \code{"lambda"}: the thermal conductivity in mW/K/m.
+		\item \code{"sigma"}: the surface tension in mN/m.
+		\item \code{"epsilon"}: the dielectric constant.
 	}
 }
 \value{
@@ -69,9 +71,8 @@ if97(what, p, t, state = if97_state(p, t))
 	Jonathan Debove
 }
 \note{
-	Computing the needed properties simultaneously (in a single call)
-	shoud be more efficient than separately because most of the computation
-	is shared between the different properties.
+	Computing several properties in a single call may be more efficient
+	than separately because most of the computation time is shared.
 }
 \examples{
 what <- c("v", "h", "u", "s", "cp", "w")

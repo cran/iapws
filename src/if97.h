@@ -22,6 +22,7 @@
 #include "iapws.h"
 
 #define IF97_R		0.461526	/* kJ/kg/K */
+#define IF97_PT		611.657e-06	/* MPa */
 
 typedef enum {
 	IF97_UNDEF = 0,

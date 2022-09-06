@@ -92,7 +92,7 @@ static double lambda2(const iapws_phi *phi, double dchi, double eta)	/* mW/K/m *
 
 	if (rho == 0.0 || dchi <= 0.0) return 0.0;
 
-	double y = qd * xi0 * pow(dchi / gam0, nu / gam);
+	double y = qd * xi0 * POW(dchi / gam0, nu / gam);
 	if (y < 1.2e-7) return 0.0;
 
 	double cp = iapws_cp(phi);

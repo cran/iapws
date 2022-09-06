@@ -51,6 +51,8 @@ iapws95_pt(what, p, t, state = iapws95_state(p, t))
 		\item \code{"w"}: the speed of sound in m/s.
 		\item \code{"eta"}: the dynamic viscosity in \eqn{10^{-6}}Pa.s.
 		\item \code{"lambda"}: the thermal conductivity in mW/K/m.
+		\item \code{"sigma"}: the surface tension in mN/m.
+		\item \code{"epsilon"}: the dielectric constant.
 	}
 }
 \value{
@@ -71,14 +73,22 @@ iapws95_pt(what, p, t, state = iapws95_state(p, t))
 	International Association for the Properties of Water and Steam,
 	IAPWS R15-11(2011), Release on the IAPWS Formulation 2011 for the
 	Thermal Conductivity of Ordinary Water Substance.
+
+	International Association for the Properties of Water and Steam,
+	IAPWS R1-76(2014), Revised Release on Surface Tension of Ordinary Water
+	Substance
+
+	International Association for the Properties of Water and Steam,
+	IAPWS R8-97, Release on the Static Dielectric Constant of Ordinary
+	Water Substance for Temperatures from 238 K to 873 K and Pressures
+	up to 1000 MPa
 }
 \author{
 	Jonathan Debove
 }
 \note{
-	Computing the needed properties simultaneously (in a single call)
-	shoud be more efficient than separately because most of the computation
-	is shared between the different properties.
+	Computing several properties in a single call may be more efficient
+	than separately because most of the computation time is shared.
 }
 \examples{
 # IAPWS95 Tab. 7
@@ -152,5 +162,22 @@ stopifnot(all.equal(tab5[, "lambda", drop = FALSE],
 	  matrix(c(51.9298924, 130.922885, 367.787459, 757.959776,
 		   1443.75556, 650.319402, 448.883487, 600.961346),
 		 8, 1, dimnames = list(NULL, c("lambda"))), tolerance = 1e-9))
+}
+
+# Dielectric constant Tab. 4
+tab4 <- iapws95_pt("epsilon",
+                   p = c(0.1013125, 0.1013125, 10, 1000,
+                         10, 100, 500, 10, 100, 500),
+                   t = c(240, 300, 300, 300,
+                         650, 650, 650, 870, 870, 870),
+		   state = c(rep("liquid", 4),
+			     "gas", rep("supercritical", 2),
+			     "gas", rep("supercritical", 2)))
+format(tab4, digits = 6)
+\dontshow{
+stopifnot(all.equal(tab4[, "epsilon", drop = FALSE],
+	  matrix(c(104.34982, 77.74735, 78.11269, 103.69632, 1.26715,
+		   17.71733, 26.62132, 1.12721, 4.98281, 15.09746),
+		 10, 1, dimnames = list(NULL, c("epsilon"))), tolerance = 1e-7))
 }
 }

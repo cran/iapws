@@ -43,7 +43,7 @@
 		 alpha = 12L, beta = 13L,
 		 chit = 14L,
 		 eta = 15L, lambda = 16L,
-		 sigma = 17L)
+		 sigma = 17L, epsilon = 18L)
 
 .check_what <- function(what)
 {

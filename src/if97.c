@@ -105,7 +105,7 @@ double if97_psat(double t)
 	return 0.0;
 }
 
-#include "sat.h"
+
 int if97_gamma(double p, double t, iapws_state_id state, iapws_phi *gamma)
 {
 	if97_region_id reg = if97_region(p, t);
@@ -133,8 +133,8 @@ int if97_gamma(double p, double t, iapws_state_id state, iapws_phi *gamma)
 			reg = IF97_UNDEF;
 		}
 	} else if (state == IAPWS_CRIT) {
-		if (reg == IF97_STEAM) {
-		} else if (reg == IF97_SUPER) {
+		if (reg == IF97_SUPER) {
+		} else if (reg == IF97_STEAM) {
 		} else if (reg == IF97_GAS) {
 		} else {
 			reg = IF97_UNDEF;
@@ -475,12 +475,11 @@ static void get_phi_r3_pt(double *rho, void *xphi, double *p, double *dp)
 
 static int phi_r3_pt(double p, double t, iapws_phi *phi)
 {
-	int maxiter = iapws_nroot_maxiter;
-	double tolf = iapws_nroot_tolf;
-	double tolx = iapws_nroot_tolx;
-	phi->p = p;
-	phi->t = t;
-	return nroot(get_phi_r3_pt, &phi->rho, phi, &tolf, &tolx, &maxiter);
+	int maxiter = nroot_maxiter;
+	double tolf = nroot_tolf;
+	double tolx = nroot_tolx;
+	return nroot1(get_phi_r3_pt, &phi->rho, phi,
+			&tolf, &tolx, &maxiter, nroot_verbose);
 }
 
 /* Region 4 */
@@ -507,7 +506,7 @@ static double pi_r4(double theta)
 
 static double theta_r4(double pi)
 {
-	double beta = pow(pi, .25);
+	double beta = POW(pi, .25);
 	double beta2 = beta * beta;
 	double e = beta2 + coef_r4[2] * beta + coef_r4[5];
 	double f = coef_r4[0] * beta2 + coef_r4[3] * beta + coef_r4[6];

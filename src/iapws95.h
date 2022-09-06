@@ -22,6 +22,7 @@
 #include "iapws.h"
 
 #define IAPWS95_R	0.46151805	/* kJ/kg/K */
+#define IAPWS95_PT	611.654771e-06	/* MPa */
 
 int iapws95_phi(double rho, double t, iapws_phi *phi);
 int iapws95_phi_pt(double p, double t, iapws_state_id state, iapws_phi *phi);

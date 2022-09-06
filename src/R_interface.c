@@ -24,10 +24,18 @@
 #include "if97.h"
 #include "visc.h"
 #include "cond.h"
+#include "surf.h"
+#include "dielec.h"
+#include "nroot.h"
+
+#define REGISTER_IAPWS_SAT 0
+#if REGISTER_IAPWS_SAT
+#	include "sat.h"
+#endif
 
 /* IF97 */
 
-static double (*if97_a[18])(const iapws_phi *phi) = {
+static double (*if97_a[])(const iapws_phi *phi) = {
 	iapws_f, iapws_g,
 	iapws_u, iapws_h,
 	iapws_s, iapws_t,
@@ -37,7 +45,7 @@ static double (*if97_a[18])(const iapws_phi *phi) = {
 	iapws_alpha, iapws_beta,
 	iapws_chit,
 	if97_eta, if97_lambda,
-	iapws_sigma,
+	iapws_sigma, iapws_epsilon,
 };
 
 MAKE_R_FUN_2(if97_state, double, double, int)
@@ -81,7 +89,7 @@ SEXP R_if97(SEXP w, SEXP p, SEXP t, SEXP s)
 
 /* IAPWS95 */
 
-static double (*iapws95_a[18])(const iapws_phi *phi) = {
+static double (*iapws95_a[])(const iapws_phi *phi) = {
 	iapws_f, iapws_g,
 	iapws_u, iapws_h,
 	iapws_s, iapws_t,
@@ -91,7 +99,7 @@ static double (*iapws95_a[18])(const iapws_phi *phi) = {
 	iapws_alpha, iapws_beta,
 	iapws_chit,
 	iapws95_eta, iapws95_lambda,
-	iapws_sigma,
+	iapws_sigma, iapws_epsilon,
 };
 
 MAKE_R_FUN_2(iapws95_state, double, double, int)
@@ -224,20 +232,41 @@ SEXP R_iapws95_sat_p(SEXP w, SEXP t)
 	return d;
 }
 
-#define ADDENTRY(f, n) {#f, (DL_FUNC) &f, n}
+SEXP R_nroot_control(SEXP trace, SEXP maxit, SEXP abstol, SEXP reltol)
+{
+	nroot_verbose = asInteger(trace);
+	nroot_maxiter = asInteger(maxit);
+	nroot_tolf = asReal(abstol);
+	nroot_tolx = asReal(reltol);
+	return R_NilValue;
+}
+
+#if REGISTER_IAPWS_SAT
+	MAKE_R_FUN_1(sat_p, double, double)
+	MAKE_R_FUN_1(sat_rhol, double, double)
+	MAKE_R_FUN_1(sat_rhog, double, double)
+#endif
+
+#define ADDENTRY(f, n) {"C_" # f, (DL_FUNC) &R_ ## f, n}
 
 static const R_CallMethodDef CallEntries[] = {
-	ADDENTRY(R_if97_region,	2),
-	ADDENTRY(R_if97_state,	2),
-	ADDENTRY(R_if97_tsat,	1),
-	ADDENTRY(R_if97_psat,	1),
-	ADDENTRY(R_if97,	4),
-	ADDENTRY(R_iapws95_state,	2),
-	ADDENTRY(R_iapws95_state_rhot,	2),
-	ADDENTRY(R_iapws95_sat,	2),
-	ADDENTRY(R_iapws95_sat_p,	2),
-	ADDENTRY(R_iapws95,	3),
-	ADDENTRY(R_iapws95_pt,	4),
+	ADDENTRY(if97_region,	2),
+	ADDENTRY(if97_state,	2),
+	ADDENTRY(if97_tsat,	1),
+	ADDENTRY(if97_psat,	1),
+	ADDENTRY(if97,	4),
+	ADDENTRY(iapws95_state,	2),
+	ADDENTRY(iapws95_state_rhot,	2),
+	ADDENTRY(iapws95_sat,	2),
+	ADDENTRY(iapws95_sat_p,	2),
+	ADDENTRY(iapws95,	3),
+	ADDENTRY(iapws95_pt,	4),
+	ADDENTRY(nroot_control,	4),
+#if REGISTER_IAPWS_SAT
+	ADDENTRY(sat_p,	1),
+	ADDENTRY(sat_rhol,	1),
+	ADDENTRY(sat_rhog,	1),
+#endif
 	{NULL, NULL, 0},
 };
 

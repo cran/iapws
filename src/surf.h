@@ -16,23 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef IAPWS_NROOT_H
-#define IAPWS_NROOT_H
+#ifndef IAPWS_SURF_H
+#define IAPWS_SURF_H
 
-extern int nroot_verbose;
-extern int nroot_maxiter;
-extern double nroot_tolf;
-extern double nroot_tolx;
-
-typedef void root_fun(double *x, void *prms, double *fx, double *dfx);
-int nroot1(root_fun fun, double *x, void *prms,
-		double *tolf, double *tolx, int *maxiter, int trace);
-int nroot2(root_fun fun, double *x, void *prms,
-		double *tolf, double *tolx, int *maxiter, int trace);
-int nrootn(int n, root_fun fun, double *x, void *prms,
-		double *tolf, double *tolx, int *maxiter, int trace);
-
-int sroot(root_fun fun, double *x, void *prms,
-		double *tolf, double *tolx, int *maxiter, int trace);
+double iapws_sigma(const iapws_phi *phi);
 
 #endif

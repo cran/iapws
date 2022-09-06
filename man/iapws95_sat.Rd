@@ -44,12 +44,14 @@ iapws95_sat_p(what, p)
 		\item \code{"w"}: the speed of sound in m/s.
 		\item \code{"eta"}: the dynamic viscosity in \eqn{10^{-6}}Pa.s.
 		\item \code{"lambda"}: the thermal conductivity in mW/K/m.
+		\item \code{"sigma"}: the surface tension in mN/m.
+		\item \code{"epsilon"}: the dielectric constant.
 	}
 }
 \value{
 	A numeric array of dimension \code{c(n, length(what), 2L)} with
 	\code{n} the length of either \code{p} or \code{t}. The last dimension
-	indicate the physical state (\code{liquid} or \code{gas}).
+	indicate the physical state (\code{"liquid"} or \code{"gas"}).
 }
 \references{
 	International Association for the Properties of Water and Steam,
@@ -61,9 +63,8 @@ iapws95_sat_p(what, p)
 	Jonathan Debove
 }
 \note{
-	Computing the needed properties simultaneously (in a single call)
-	shoud be more efficient than separately because most of the computation
-	is shared between the different properties.
+	Computing several properties in a single call may be more efficient
+	than separately because most of the computation time is shared.
 }
 \examples{
 # IAPWS95 Tab. 8
