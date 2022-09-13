@@ -28,6 +28,7 @@
 #include "iapws95.h"
 #include "if97.h"
 #include "sat.h"
+#include "melt.h"
 #include "nroot.h"
 
 enum {
@@ -411,23 +412,23 @@ iapws_state_id iapws95_state(double p, double t)
 	double ps;
 	iapws_phi phil, phig;
 
-	if (t < 273.16) return IAPWS_SOLID;  /* FIXME */
-	if (t >= IAPWS_TC) {
-		if (p >= IAPWS_PC) return IAPWS_CRIT;
-		else return IAPWS_GAS;
+	if (t >= 273.16 && t < IAPWS_TC && p < 623.15) {
+		/* Try with fast approximation */
+		ps = sat_p(t);
+		if (p > ps * PEPS) return IAPWS_LIQUID;
+		if (p * PEPS < ps) return IAPWS_GAS;
+
+		iapws95_sat(t, &phil, &phig);
+		ps = iapws_p(&phig);
+		if (p > ps) return IAPWS_LIQUID;
+		if (p < ps) return IAPWS_GAS;
+
+		return IAPWS_SAT;
+	} else if (t >= IAPWS_TC) {
+		if (p < IAPWS_PC) return IAPWS_GAS;
+		else return IAPWS_CRIT;
 	}
-
-	/* Try with fast approximation */
-	ps = sat_p(t);
-	if (p > ps * PEPS) return IAPWS_LIQUID;
-	if (p * PEPS < ps) return IAPWS_GAS;
-
-	iapws95_sat(t, &phil, &phig);
-	ps = iapws_p(&phig);
-	if (p > ps) return IAPWS_LIQUID;
-	if (p < ps) return IAPWS_GAS;
-
-	return IAPWS_SAT;
+	return melt_sub_state(p, t);
 }
 
 iapws_state_id iapws95_state_rhot(double rho, double t)
@@ -435,8 +436,7 @@ iapws_state_id iapws95_state_rhot(double rho, double t)
 	double rhol, rhog;
 	iapws_phi phil, phig;
 
-	if (t < 273.16) return IAPWS_SOLID;  /* FIXME */
-	if (t < IAPWS_TC) {
+	if (t >= 273.16 && t < IAPWS_TC) {
 		/* Try with fast approximation */
 		rhol = sat_rhol(t);
 		rhog = sat_rhog(t);
@@ -451,10 +451,13 @@ iapws_state_id iapws95_state_rhot(double rho, double t)
 		if (rho > rhol) return IAPWS_LIQUID;
 		else if (rho < rhog) return IAPWS_GAS;
 		else return IAPWS_SAT;
+	} else if (t >= IAPWS_TC) {
+		//iapws95_phi(rho, t, &phig);
+		//if (iapws_p(&phig) < IAPWS_PC) return IAPWS_GAS;
+		//else return IAPWS_CRIT;
+		if (rho < IAPWS_RHOC) return IAPWS_GAS;
+		else return IAPWS_CRIT;
 	}
-
-	iapws95_phi(rho, t, &phig);
-	if (iapws_p(&phig) < IAPWS_PC) return IAPWS_GAS;
-	return IAPWS_CRIT;
+	return IAPWS_UNDEF;  /* FIXME */
 }
 

@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-.IAPWS_STATE <- c(undef  = -1L,
+.IAPWS_STATES <- c(undef  = -1L,
 		  solid  = 0L,
 		  liquid = 1L,
 		  gas    = 2L,
@@ -25,16 +25,14 @@
 {
 	.call <- format(sys.call(sys.parent()))
 	if (!is.character(state)) {
-		stop(.call, ": `state` not a character vector", call. = FALSE)
-	} else if (!all(state %in% names(.IAPWS_STATE))) {
-		stop(.call, ": `state` element not in (",
-		     paste0(names(.IAPWS_STATE), collapse = ", "), ")",
-		     call. = FALSE)
+		stop(.call, ": 'state' is not a character vector", call. = FALSE)
+	} else if (!all(state %in% names(.IAPWS_STATES))) {
+		stop(.call, ": invalid 'state'", call. = FALSE)
 	}
-	.IAPWS_STATE[state]
+	.IAPWS_STATES[state]
 }
 
-.IAPWS_WHAT <- c(f  =  0L, g  =  1L,
+.IAPWS_PROPERTIES <- c(f  =  0L, g  =  1L,
 		 u  =  2L, h  =  3L,
 		 s  =  4L, t  =  5L,
 		 p  =  6L, v  =  7L,
@@ -49,12 +47,10 @@
 {
 	.call <- format(sys.call(sys.parent()))
 	if (!is.character(what)) {
-		stop(.call, ": `what` not a character vector", call. = FALSE)
-	} else if (!all(what %in% names(.IAPWS_WHAT))) {
-		stop(.call, ": `what` element not in (",
-		     paste0(names(.IAPWS_WHAT), collapse = ", "), ")",
-		     call. = FALSE)
+		stop(.call, ": 'what' is not a character vector", call. = FALSE)
+	} else if (!all(what %in% names(.IAPWS_PROPERTIES))) {
+		stop(.call, ": invalid 'what'", call. = FALSE)
 	}
-	.IAPWS_WHAT[what]
+	.IAPWS_PROPERTIES[what]
 }
 

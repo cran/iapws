@@ -56,16 +56,16 @@ if97(what, p, t, state = if97_state(p, t))
 }
 \references{
 	International Association for the Properties of Water and Steam,
-	IAPWS R7-97(2012), Revised Release on the IAPWS Industrial Formulation
-	1997 for the Thermodynamic Properties of Water and Steam.
+	IAPWS R7-97(2012), \emph{Revised Release on the IAPWS Industrial
+	Formulation 1997 for the Thermodynamic Properties of Water and Steam.}
 
 	International Association for the Properties of Water and Steam,
-	IAPWS R12-08(2008), Release on the IAPWS Formulation 2008 for the
-	Viscosity of Ordinary Water Substance.
+	IAPWS R12-08(2008), \emph{Release on the IAPWS Formulation 2008
+	for the Viscosity of Ordinary Water Substance.}
 
 	International Association for the Properties of Water and Steam,
-	IAPWS R15-11(2011), Release on the IAPWS Formulation 2011 for the
-	Thermal Conductivity of Ordinary Water Substance.
+	IAPWS R15-11(2011), \emph{Release on the IAPWS Formulation 2011
+	for the Thermal Conductivity of Ordinary Water Substance.}
 }
 \author{
 	Jonathan Debove

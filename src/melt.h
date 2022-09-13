@@ -19,11 +19,18 @@
 #ifndef IAPWS_MELT_H
 #define IAPWS_MELT_H
 
-double melt_p1h(double t);
-double melt_p3(double t);
-double melt_p5(double t);
-double melt_p6(double t);
-double melt_p7(double t);
+#include "iapws.h"
+
+typedef enum {
+	ICE_1H,
+	ICE_3,
+	ICE_5,
+	ICE_6,
+	ICE_7,
+} ice_phase_id;
+
+double melt_p(double t, ice_phase_id phase);
 double sub_p(double t);
+iapws_state_id melt_sub_state(double p, double t);
 
 #endif

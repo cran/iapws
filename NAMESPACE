@@ -11,4 +11,7 @@ export(iapws95_sat_p)
 export(iapws95_state)
 export(iapws95_state_rhot)
 
+export(.IAPWS_PROPERTIES)
+export(.IAPWS_STATES)
+
 useDynLib(iapws, .registration = TRUE)

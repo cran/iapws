@@ -21,11 +21,9 @@
  * Conductivity of Ordinary Water Substance (2011)
  */
 
-#include <assert.h>
 #include <math.h>
 
 #include "iapws.h"
-#include "if97.h"
 #include "iapws95.h"
 #include "visc.h"
 

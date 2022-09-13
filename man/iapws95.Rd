@@ -62,26 +62,26 @@ iapws95_pt(what, p, t, state = iapws95_state(p, t))
 }
 \references{
 	International Association for the Properties of Water and Steam,
-	IAPWS R6-95(2018), Revised Release on the IAPWS Formulation 1995 for
-	the Thermodynamic Properties of Ordinary Water Substance for General
-	and Scientific Use.
+	IAPWS R6-95(2018), \emph{Revised Release on the IAPWS Formulation 1995
+	for the Thermodynamic Properties of Ordinary Water Substance
+	for General and Scientific Use.}
 
 	International Association for the Properties of Water and Steam,
-	IAPWS R12-08(2008), Release on the IAPWS Formulation 2008 for the
-	Viscosity of Ordinary Water Substance.
+	IAPWS R12-08(2008), \emph{Release on the IAPWS Formulation 2008
+	for the Viscosity of Ordinary Water Substance.}
 
 	International Association for the Properties of Water and Steam,
-	IAPWS R15-11(2011), Release on the IAPWS Formulation 2011 for the
-	Thermal Conductivity of Ordinary Water Substance.
+	IAPWS R15-11(2011), \emph{Release on the IAPWS Formulation 2011
+	for the Thermal Conductivity of Ordinary Water Substance.}
 
 	International Association for the Properties of Water and Steam,
-	IAPWS R1-76(2014), Revised Release on Surface Tension of Ordinary Water
-	Substance
+	IAPWS R1-76(2014), \emph{Revised Release on Surface Tension
+	of Ordinary Water Substance.}
 
 	International Association for the Properties of Water and Steam,
-	IAPWS R8-97, Release on the Static Dielectric Constant of Ordinary
-	Water Substance for Temperatures from 238 K to 873 K and Pressures
-	up to 1000 MPa
+	IAPWS R8-97, \emph{Release on the Static Dielectric Constant
+	of Ordinary Water Substance for Temperatures from 238 K to 873 K
+	and Pressures up to 1000 MPa.}
 }
 \author{
 	Jonathan Debove
@@ -91,7 +91,7 @@ iapws95_pt(what, p, t, state = iapws95_state(p, t))
 	than separately because most of the computation time is shared.
 }
 \examples{
-# IAPWS95 Tab. 7
+# IAPWS-95 Tab. 7
 tab7 <- iapws95(c("p", "cv", "w", "s"),
                 t = c(300, 300, 300,
                       500, 500, 500, 500,

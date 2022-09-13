@@ -17,9 +17,9 @@ iapws95_state_rhot(rho, t)
 	\item{t}{a numeric vector giving the temperature values in K.}
 }
 \value{
-	A character vector giving the physical state. One of \code{"solid"},
-	\code{"liquid"}, \code{"gas"}, \code{"supercritical"},
-	\code{"saturated"} or \code{"undef"}.
+	A character vector giving the physical state.
+	One of \code{"solid"}, \code{"liquid"}, \code{"gas"},
+	\code{"supercritical"}, \code{"saturated"} or \code{"undef"}.
 }
 \author{
 	Jonathan Debove

@@ -21,9 +21,11 @@
  * and Sublimation Curves of Ordinary Water Substance
  */
 
+//#include <assert.h>
 #include <math.h>
 
-#include "iapws.h"  /* for POW and POWINT */
+#include "iapws.h"
+#include "melt.h"
 
 static const double tmelt[] = {
 	273.16,
@@ -42,7 +44,7 @@ static const double pmelt[] = {
 	2216.0,
 };
 
-double melt_p1h(double t)
+static double melt_p1h(double t)
 {
 	const double a[3] = { 0.119539337e7, 0.808183159e5, 0.333826860e4 };
 	const double b[3] = { 0.300000e1, 0.257500e2, 0.103750e3 };
@@ -57,28 +59,28 @@ double melt_p1h(double t)
 	return ans * pmelt[0];
 }
 
-double melt_p3(double t)
+static double melt_p3(double t)
 {
 	double theta = t / tmelt[1];
 	if (t < tmelt[1] || t > tmelt[2]) return 0.0;
-	return (1.0 - POWINT(theta, 60) * 0.299948) * pmelt[1];
+	return (1.0 - (1.0 - POWINT(theta, 60)) * 0.299948) * pmelt[1];
 }
 
-double melt_p5(double t)
+static double melt_p5(double t)
 {
 	double theta = t / tmelt[2];
 	if (t < tmelt[2] || t > tmelt[3]) return 0.0;
-	return (1.0 - POWINT(theta, 8) * 1.18721) * pmelt[2];
+	return (1.0 - (1.0 - POWINT(theta, 8)) * 1.18721) * pmelt[2];
 }
 
-double melt_p6(double t)
+static double melt_p6(double t)
 {
 	double theta = t / tmelt[3];
 	if (t < tmelt[3] || t > tmelt[4]) return 0.0;
-	return (1.0 - POW(theta, 4.6) * 1.07476) * pmelt[3];
+	return (1.0 - (1.0 - POW(theta, 4.6)) * 1.07476) * pmelt[3];
 }
 
-double melt_p7(double t)
+static double melt_p7(double t)
 {
 	const double a[3] = { 0.173683e1, -0.544606e-1, 0.806106e-7 };
 	const int b[3] = { -1, 5, 22 };
@@ -91,6 +93,18 @@ double melt_p7(double t)
 		a[1] * (1.0 - POWINT(theta, b[1])) +
 		a[2] * (1.0 - POWINT(theta, b[2]));
 	return exp(ans) * pmelt[4];
+}
+
+double melt_p(double t, ice_phase_id phase)
+{
+	switch (phase) {
+		case ICE_1H: return melt_p1h(t);
+		case ICE_3:  return melt_p3(t);
+		case ICE_5:  return melt_p5(t);
+		case ICE_6:  return melt_p6(t);
+		case ICE_7:  return melt_p7(t);
+		default: return 0.0;
+	}
 }
 
 double sub_p(double t)
@@ -106,5 +120,45 @@ double sub_p(double t)
 		a[1] * POW(theta, b[1]) +
 		a[2] * POW(theta, b[2]);
 	return exp(ans / theta) * pmelt[0];
+}
+
+iapws_state_id melt_sub_state(double p, double t)
+{
+	//assert((t < tmelt[0] && p < pmelt[1]) || p > pmelt[1]);
+
+	if (p < 2.0e-46) { /* p < sub_p(50.0) */
+		if (t >= 50.0) return IAPWS_GAS;
+		else return IAPWS_UNDEF;
+	} else if (p < pmelt[0]) {
+		if (t < 50.0) return IAPWS_SOLID;
+		else if (t > tmelt[0]) return IAPWS_GAS;
+		else if (p <= sub_p(t)) return IAPWS_GAS;
+		else return IAPWS_SOLID;
+	} else if (p < pmelt[1]) {
+		if (t < tmelt[1]) return IAPWS_SOLID;
+		else if (t > tmelt[0]) return IAPWS_LIQUID;
+		else if (p >= melt_p1h(t)) return IAPWS_LIQUID;
+		else return IAPWS_SOLID;
+	} else if (p < pmelt[2]) {
+		if (t < tmelt[1]) return IAPWS_SOLID;
+		else if (t > tmelt[2]) return IAPWS_LIQUID;
+		else if (p <= melt_p3(t)) return IAPWS_LIQUID;
+		else return IAPWS_SOLID;
+	} else if (p < pmelt[3]) {
+		if (t < tmelt[2]) return IAPWS_SOLID;
+		else if (t > tmelt[3]) return IAPWS_LIQUID;
+		else if (p <= melt_p5(t)) return IAPWS_LIQUID;
+		else return IAPWS_SOLID;
+	} else if (p < pmelt[4]) {
+		if (t < tmelt[3]) return IAPWS_SOLID;
+		else if (t > tmelt[4]) return IAPWS_LIQUID;
+		else if (p <= melt_p6(t)) return IAPWS_LIQUID;
+		else return IAPWS_SOLID;
+	} else {  //if (p < pmelt[5]) {
+		if (t < tmelt[4]) return IAPWS_SOLID;
+		else if (t > tmelt[5]) return IAPWS_LIQUID;
+		else if (p <= melt_p7(t)) return IAPWS_LIQUID;
+		else return IAPWS_SOLID;
+	}
 }
 

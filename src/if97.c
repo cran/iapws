@@ -25,6 +25,7 @@
 #include <math.h>
 
 #include "if97.h"
+#include "melt.h"
 #include "nroot.h"
 
 /* Static function forward declarations */
@@ -49,15 +50,16 @@ typedef struct {
 iapws_state_id if97_state(double p, double t)
 {
 	double ps;
-	if (t < 273.16) return IAPWS_SOLID;  /* FIXME */
-	if (t >= IAPWS_TC) {
-		if (p >= IAPWS_PC) return IAPWS_CRIT;
-		else return IAPWS_GAS;
+	if (t >= 273.16 && t < IAPWS_TC && p < 623.15) {
+		ps = if97_psat(t);
+		if (p > ps) return IAPWS_LIQUID;
+		if (p < ps) return IAPWS_GAS;
+		return IAPWS_SAT;
+	} else if (t >= IAPWS_TC) {
+		if (p < IAPWS_PC) return IAPWS_GAS;
+		else return IAPWS_CRIT;
 	}
-	ps = if97_psat(t);
-	if (p > ps) return IAPWS_LIQUID;
-	if (p < ps) return IAPWS_GAS;
-	return IAPWS_SAT;
+	return melt_sub_state(p, t);
 }
 
 if97_region_id if97_region(double p, double t)

@@ -23,8 +23,8 @@ if97_tsat(p)
 }
 \references{
 	International Association for the Properties of Water and Steam,
-	IAPWS R7-97(2012), Revised Release on the IAPWS Industrial Formulation
-	1997 for the Thermodynamic Properties of Water and Steam.
+	IAPWS R7-97(2012), \emph{Revised Release on the IAPWS Industrial
+	Formulation 1997 for the Thermodynamic Properties of Water and Steam.}
 }
 \author{
 	Jonathan Debove

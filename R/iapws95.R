@@ -54,12 +54,12 @@ iapws95_sat_p <- function(what, p)
 iapws95_state <- function(p, t)
 {
 	s <- callWrapper(C_iapws95_state, p = p, t = t)
-	names(.IAPWS_STATE)[match(s, .IAPWS_STATE)]
+	names(.IAPWS_STATES)[match(s, .IAPWS_STATES)]
 }
 
 iapws95_state_rhot <- function(rho, t)
 {
 	s <- callWrapper(C_iapws95_state_rhot, rho = rho, t = t)
-	names(.IAPWS_STATE)[match(s, .IAPWS_STATE)]
+	names(.IAPWS_STATES)[match(s, .IAPWS_STATES)]
 }
 

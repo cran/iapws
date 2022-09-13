@@ -1,0 +1,77 @@
+\documentclass[a4paper,12pt]{article}
+
+%\VignetteIndexEntry{Package 'iapws'}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+
+\newcommand{\R}{\textsf{R}}
+\newcommand{\iapws}{\textbf{iapws}}
+\newcommand{\IAPWS}{\textsc{IAPWS}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\fun}[1]{\code{#1()}}
+
+\title{Getting Thermodynamic and Transport Properties of Water in \R{}}
+\author{Jonathan Debove}
+
+\begin{document}
+
+\maketitle
+
+\href{http://iapws.org}{IAPWS} stands for International Association
+for the Properties of Water and Steam.
+One of its objectives is to provide formulations for thermodynamic and
+transport properties of water.
+The \iapws{} package implements some of these formulations,
+in particular the so-called IAPWS-95 and IAPWS-IF97 formulations.
+The former is recommended for general and scientific use, the latter
+is designed for industrial use.
+
+\section{Installation}
+
+The simplest way to install \iapws{} is to get it from CRAN. Type the
+following command in the \R{} console:
+
+<<eval=FALSE>>=
+install.packages("iapws")
+@
+
+\section{Usage}
+
+Let us load the \iapws{} package:
+
+<<>>=
+library(iapws)
+@
+And compute some water properties along the isochore
+$\code{rho} = 800~\mathrm{kg}/\mathrm{m}^3$:
+
+<<>>=
+iapws95(c("p", "h"), rho = 800, t = seq(573, 623, by = 10))
+@
+
+In this example, the pressure (\code{p}) and the specific enthalpy
+(\code{h}) are computed simultaneously for several temperatures
+(\code{t}) between 573 K and 623 K.
+The units follows the convention used by the IAPWS, so pressures are
+in MPa and specific enthalpies are in kJ/kg.
+The different output properties and their units are listed in the
+function documentation (type \code{help(iapws95)} to see them all).
+
+If more interested in isobaric properties, one can use the function
+\fun{iapws95\_pt} instead:
+
+<<>>=
+iapws95_pt(c("rho", "cp"), p = 0.1013125,  # atmospheric pressure
+	   t = seq(293, 373, by = 20))
+@
+
+All the functions in \iapws{} are vectorized.
+They take vectors as arguments and return vectors or arrays.
+
+\section{License}
+
+\href{https://www.gnu.org/licenses/gpl-3.0.html}{GPL-3.0-or-later}
+
+\end{document}
+

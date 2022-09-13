@@ -22,7 +22,7 @@ if97_region <- function(p, t)
 if97_state <- function(p, t)
 {
 	s <- callWrapper(C_if97_state, p = p, t = t)
-	names(.IAPWS_STATE)[match(s, .IAPWS_STATE)]
+	names(.IAPWS_STATES)[match(s, .IAPWS_STATES)]
 }
 
 if97_psat <- function(t)

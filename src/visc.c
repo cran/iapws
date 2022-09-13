@@ -21,7 +21,6 @@
  * for the Viscosity of Ordinary Water Substance (2008)
  */
 
-#include <assert.h>
 #include <math.h>
 
 #include "iapws.h"

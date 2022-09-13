@@ -55,9 +55,9 @@ iapws95_sat_p(what, p)
 }
 \references{
 	International Association for the Properties of Water and Steam,
-	IAPWS R6-95(2018), Revised Release on the IAPWS Formulation 1995 for
-	the Thermodynamic Properties of Ordinary Water Substance for General
-	and Scientific Use.
+	IAPWS R6-95(2018), \emph{Revised Release on the IAPWS Formulation 1995
+	for the Thermodynamic Properties of Ordinary Water Substance
+	for General and Scientific Use.}
 }
 \author{
 	Jonathan Debove
@@ -67,7 +67,7 @@ iapws95_sat_p(what, p)
 	than separately because most of the computation time is shared.
 }
 \examples{
-# IAPWS95 Tab. 8
+# IAPWS-95 Tab. 8
 tab8 <- iapws95_sat(c("p", "rho", "h", "s"), t = c(275, 450, 625))
 format(tab8, scientific = TRUE, digits = 9)
 \dontshow{

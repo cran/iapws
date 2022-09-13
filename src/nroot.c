@@ -16,10 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifdef _WIN32
-#	include <malloc.h>
-#	define alloca _alloca
-#else
+#include <Rconfig.h> // for HAVE_ALLOCA_H (R >= 3.2.2)
+#ifdef __GNUC__
+#	undef alloca
+#	define alloca(x) __builtin_alloca((x))
+#elif defined(HAVE_ALLOCA_H)
 #	include <alloca.h>
 #endif
 
