@@ -33,6 +33,15 @@ iapws95_pt <- function(what, p, t, state = iapws95_state(p, t))
 	x
 }
 
+iapws95_ph <- function(what, p, h)
+{
+	w <- .check_what(what)
+	x <- callWrapper(C_iapws95_ph, w = w, p = p, h = h,
+			 what = c("integer", "double", "double"))
+	colnames(x) <- what
+	x
+}
+
 iapws95_sat <- function(what, t)
 {
 	w <- .check_what(what)

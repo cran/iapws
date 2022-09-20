@@ -1,6 +1,6 @@
 \documentclass[a4paper,12pt]{article}
 
-%\VignetteIndexEntry{Package 'iapws'}
+%\VignetteIndexEntry{Getting Started with the iapws Package}
 
 \usepackage[margin=1in]{geometry}
 \usepackage{hyperref}
@@ -51,8 +51,8 @@ iapws95(c("p", "h"), rho = 800, t = seq(573, 623, by = 10))
 @
 
 In this example, the pressure (\code{p}) and the specific enthalpy
-(\code{h}) are computed simultaneously for several temperatures
-(\code{t}) between 573 K and 623 K.
+(\code{h}) are computed simultaneously for temperatures (\code{t})
+between 573 K and 623 K.
 The units follows the convention used by the IAPWS, so pressures are
 in MPa and specific enthalpies are in kJ/kg.
 The different output properties and their units are listed in the
@@ -62,12 +62,13 @@ If more interested in isobaric properties, one can use the function
 \fun{iapws95\_pt} instead:
 
 <<>>=
-iapws95_pt(c("rho", "cp"), p = 0.1013125,  # atmospheric pressure
+iapws95_pt(c("rho", "h"), p = 0.1013125,  # atmospheric pressure
 	   t = seq(293, 373, by = 20))
 @
 
 All the functions in \iapws{} are vectorized.
 They take vectors as arguments and return vectors or arrays.
+Type \code{library(help = iapws)} for more information.
 
 \section{License}
 

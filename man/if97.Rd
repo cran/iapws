@@ -1,78 +1,83 @@
 \name{if97}
 \alias{if97}
+\alias{if97_ph}
 \title{
-	IAPWS-IF97 Basic Equations for Regions 1, 2, 3 and 5
+  IAPWS-IF97 Equations for Regions 1, 2, 3 and 5
 }
 \description{
-	Compute thermodynamic and transport properties of water and steam
-	using the IAPWS industrial formulation 1997.
+  Compute thermodynamic and transport properties of water and steam
+  using the IAPWS industrial formulation 1997.
 }
 \usage{
 if97(what, p, t, state = if97_state(p, t))
+if97_ph(what, p, h)
 }
 \arguments{
   \item{what}{
-	  a character vector listing the output properties. See Details for
-	  available properties.
-}
+    a character vector listing the output properties.
+    See Details for available properties.
+  }
   \item{p}{
-	  a numeric vector giving the pressure values in MPa.
-}
+    a numeric vector giving the pressure values in MPa.
+  }
   \item{t}{
-	  a numeric vector giving the temperature values in K.
-}
+    a numeric vector giving the temperature values in K.
+  }
+  \item{h}{
+    a numeric vector giving the specific enthalpy values in kJ/kg.
+  }
   \item{state}{
-	  a character vector giving the physical state. One of
-	  \code{"liquid"}, \code{"gas"} or \code{"supercritical"}.
-}
+    a character vector giving the physical state. One of
+    \code{"liquid"}, \code{"gas"} or \code{"supercritical"}.
+  }
 }
 \details{
-	The currently available properties are:
-	\itemize{
-		\item \code{"f"}: the specific free energy in kJ/kg.
-		\item \code{"g"}: the specific Gibbs enthalpy in kJ/kg.
-		\item \code{"u"}: the specific internal energy in kJ/kg.
-		\item \code{"h"}: the specific enthalpy in kJ/kg.
-		\item \code{"s"}: the specific entropy in kJ/K/kg.
-		\item \code{"t"}: the temperature in K.
-		\item \code{"p"}: the pressure in MPa.
-		\item \code{"v"}: the specific volume in m\eqn{^3}/kg.
-		\item \code{"rho"}: the mass density in kg/m\eqn{^3}.
-		\item \code{"cv"}: the specific isochoric heat capacity in kJ/K/kg.
-		\item \code{"cp"}: the specific isobaric heat capacity in kJ/K/kg.
-		\item \code{"alpha"}: the expansion coefficient in 1/K
-		\item \code{"beta"}: the pressure coefficient in MPa/K.
-		\item \code{"chit"}: the isothermal compressibility in 1/MPa.
-		\item \code{"w"}: the speed of sound in m/s.
-		\item \code{"eta"}: the dynamic viscosity in \eqn{10^{-6}}Pa.s.
-		\item \code{"lambda"}: the thermal conductivity in mW/K/m.
-		\item \code{"sigma"}: the surface tension in mN/m.
-		\item \code{"epsilon"}: the dielectric constant.
-	}
+  The currently available properties are:
+  \itemize{
+    \item \code{"f"}: the specific free energy in kJ/kg.
+    \item \code{"g"}: the specific Gibbs enthalpy in kJ/kg.
+    \item \code{"u"}: the specific internal energy in kJ/kg.
+    \item \code{"h"}: the specific enthalpy in kJ/kg.
+    \item \code{"s"}: the specific entropy in kJ/K/kg.
+    \item \code{"t"}: the temperature in K.
+    \item \code{"p"}: the pressure in MPa.
+    \item \code{"v"}: the specific volume in m\eqn{^3}/kg.
+    \item \code{"rho"}: the mass density in kg/m\eqn{^3}.
+    \item \code{"cv"}: the specific isochoric heat capacity in kJ/K/kg.
+    \item \code{"cp"}: the specific isobaric heat capacity in kJ/K/kg.
+    \item \code{"alpha"}: the expansion coefficient in 1/K
+    \item \code{"beta"}: the pressure coefficient in MPa/K.
+    \item \code{"chit"}: the isothermal compressibility in 1/MPa.
+    \item \code{"w"}: the speed of sound in m/s.
+    \item \code{"eta"}: the dynamic viscosity in \eqn{10^{-6}}Pa.s.
+    \item \code{"lambda"}: the thermal conductivity in mW/K/m.
+    \item \code{"sigma"}: the surface tension in mN/m.
+    \item \code{"epsilon"}: the dielectric constant.
+  }
 }
 \value{
-	A numeric matrix of dimension \code{c(n, length(what))} with \code{n}
-	the maximum length of either \code{p}, \code{t} or \code{state}.
+  A numeric matrix of dimension \code{c(n, length(what))} with \code{n}
+  the maximum length of either \code{p}, \code{t} or \code{state}.
 }
 \references{
-	International Association for the Properties of Water and Steam,
-	IAPWS R7-97(2012), \emph{Revised Release on the IAPWS Industrial
-	Formulation 1997 for the Thermodynamic Properties of Water and Steam.}
+  International Association for the Properties of Water and Steam,
+  IAPWS R7-97(2012), \emph{Revised Release on the IAPWS Industrial
+  Formulation 1997 for the Thermodynamic Properties of Water and Steam.}
 
-	International Association for the Properties of Water and Steam,
-	IAPWS R12-08(2008), \emph{Release on the IAPWS Formulation 2008
-	for the Viscosity of Ordinary Water Substance.}
+  International Association for the Properties of Water and Steam,
+  IAPWS R12-08(2008), \emph{Release on the IAPWS Formulation 2008
+  for the Viscosity of Ordinary Water Substance.}
 
-	International Association for the Properties of Water and Steam,
-	IAPWS R15-11(2011), \emph{Release on the IAPWS Formulation 2011
-	for the Thermal Conductivity of Ordinary Water Substance.}
+  International Association for the Properties of Water and Steam,
+  IAPWS R15-11(2011), \emph{Release on the IAPWS Formulation 2011
+  for the Thermal Conductivity of Ordinary Water Substance.}
 }
 \author{
-	Jonathan Debove
+  Jonathan Debove
 }
 \note{
-	Computing several properties in a single call may be more efficient
-	than separately because most of the computation time is shared.
+  Computing several properties in a single call may be more efficient
+  than separately because most of the computation time is shared.
 }
 \examples{
 what <- c("v", "h", "u", "s", "cp", "w")
@@ -100,25 +105,25 @@ format(tab42, scientific = TRUE, digits = 9)
 
 \dontshow{
 stopifnot(all.equal(tab5[, "v", drop = FALSE],
-		    matrix(c(0.100215168e-2, 0.971180894e-3, 0.120241800e-2),
-			   3, 1, dimnames = list(NULL, "v")),
-		    tolerance = 2e-9),
-	  all.equal(tab15[, "v", drop = FALSE],
-		    matrix(c(0.394913866e2, 0.923015898e2, 0.542946619e-2),
-			   3, 1, dimnames = list(NULL, "v")),
-		    tolerance = 2e-9),
-	  all.equal(tab18[, "v", drop = FALSE],
-		    matrix(c(0.192516540, 0.186212297, 0.121685206),
-			   3, 1, dimnames = list(NULL, "v")),
-		    tolerance = 2e-9),
-	  all.equal(tab33[, "v", drop = FALSE],
-		    matrix(1 / c(500, 200, 500),
-			   3, 1, dimnames = list(NULL, "v")),
-		    tolerance = 2e-8),
-	  all.equal(tab42[, "v", drop = FALSE],
-		    matrix(c(0.138455090e1, 0.230761299e-1, 0.311385219e-1),
-			   3, 1, dimnames = list(NULL, "v")),
-		    tolerance = 2e-9))
+          matrix(c(0.100215168e-2, 0.971180894e-3, 0.120241800e-2),
+                 3, 1, dimnames = list(NULL, "v")),
+          tolerance = 2e-9),
+          all.equal(tab15[, "v", drop = FALSE],
+          matrix(c(0.394913866e2, 0.923015898e2, 0.542946619e-2),
+                 3, 1, dimnames = list(NULL, "v")),
+          tolerance = 2e-9),
+          all.equal(tab18[, "v", drop = FALSE],
+          matrix(c(0.192516540, 0.186212297, 0.121685206),
+                 3, 1, dimnames = list(NULL, "v")),
+          tolerance = 2e-9),
+          all.equal(tab33[, "v", drop = FALSE],
+          matrix(1 / c(500, 200, 500),
+                 3, 1, dimnames = list(NULL, "v")),
+          tolerance = 2e-8),
+          all.equal(tab42[, "v", drop = FALSE],
+          matrix(c(0.138455090e1, 0.230761299e-1, 0.311385219e-1),
+                 3, 1, dimnames = list(NULL, "v")),
+          tolerance = 2e-9))
 }
 
 # Viscosity and thermal conductivity
@@ -134,17 +139,17 @@ format(tab8, scientific = TRUE, digits = 9)
 
 ## Region 3 Tab. 9
 #tab9 <- if97_rhot(c("lambda", "rho", "cp", "cv", "eta"),
-#	    rho = c(0.3, 50), t = c(222, 322)),
+#      rho = c(0.3, 50), t = c(222, 322)),
 #format(tab9, scientific = TRUE, digits = 9)
 
 \dontshow{
 stopifnot(all.equal(tab7[, "lambda", drop = FALSE],
-		    matrix(c(0.481485195e3, 0.545038940e3),
-			   2, 1, dimnames = list(NULL, "lambda")),
-		    tolerance = 2e-9),
-	  all.equal(tab8[, "lambda", drop = FALSE],
-		    matrix(c(0.522311024e2, 0.177709914e3),
-			   2, 1, dimnames = list(NULL, "lambda")),
-		    tolerance = 3e-9))
+          matrix(c(0.481485195e3, 0.545038940e3),
+                 2, 1, dimnames = list(NULL, "lambda")),
+          tolerance = 2e-9),
+          all.equal(tab8[, "lambda", drop = FALSE],
+          matrix(c(0.522311024e2, 0.177709914e3),
+                 2, 1, dimnames = list(NULL, "lambda")),
+          tolerance = 3e-9))
 }
 }

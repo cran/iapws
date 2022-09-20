@@ -16,8 +16,8 @@
 
 #IF97_REGION <- c(WATER = 1L, STEAM = 2L, SUPER = 3L, SAT = 4L, GAZ = 5L)
 
-if97_region <- function(p, t)
-	callWrapper(C_if97_region, p = p, t = t)
+#if97_region <- function(p, t)
+#	callWrapper(C_if97_region, p = p, t = t)
 
 if97_state <- function(p, t)
 {
@@ -45,6 +45,15 @@ if97 <- function(what, p, t, state = if97_state(p, t))
 	s <- .check_state(state)
 	x <- callWrapper(C_if97, w = w, p = p, t = t, s = s,
 			 what = c("integer", "double", "double", "integer"))
+	colnames(x) <- what
+	x
+}
+
+if97_ph <- function(what, p, h)
+{
+	w <- .check_what(what)
+	x <- callWrapper(C_if97_ph, w = w, p = p, h = h,
+			 what = c("integer", "double", "double"))
 	colnames(x) <- what
 	x
 }

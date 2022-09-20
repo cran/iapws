@@ -98,11 +98,11 @@ static double melt_p7(double t)
 double melt_p(double t, ice_phase_id phase)
 {
 	switch (phase) {
-		case ICE_1H: return melt_p1h(t);
-		case ICE_3:  return melt_p3(t);
-		case ICE_5:  return melt_p5(t);
-		case ICE_6:  return melt_p6(t);
-		case ICE_7:  return melt_p7(t);
+		case ICE_IH:  return melt_p1h(t);
+		case ICE_III: return melt_p3(t);
+		case ICE_V:   return melt_p5(t);
+		case ICE_VI:  return melt_p6(t);
+		case ICE_VII: return melt_p7(t);
 		default: return 0.0;
 	}
 }

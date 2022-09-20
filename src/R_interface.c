@@ -27,11 +27,8 @@
 #include "surf.h"
 #include "dielec.h"
 #include "nroot.h"
-
-#define REGISTER_IAPWS_SAT 0
-#if REGISTER_IAPWS_SAT
-#	include "sat.h"
-#endif
+#include "melt.h"
+#include "sat.h"
 
 /* IF97 */
 
@@ -49,7 +46,8 @@ static double (*if97_a[])(const iapws_phi *phi) = {
 };
 
 MAKE_R_FUN_2(if97_state, double, double, int)
-MAKE_R_FUN_2(if97_region, double, double, int)
+//MAKE_R_FUN_2(if97_region, double, double, int)
+//MAKE_R_FUN_2(if97_region_ph, double, double, int)
 MAKE_R_FUN_1(if97_tsat, double, double)
 MAKE_R_FUN_1(if97_psat, double, double)
 
@@ -73,6 +71,37 @@ SEXP R_if97(SEXP w, SEXP p, SEXP t, SEXP s)
 	int offset;
 	MOD_ITERATE3_CHECK(NINTERRUPT, n, np, nt, ns, i, ip, it, is,
 		if (if97_gamma(xp[ip], xt[it], xs[is], &gamma) == 0) {
+			for (iw = 0, offset = 0; iw < nw; iw++, offset += n) {
+				xd[i + offset] = if97_a[xw[iw]](&gamma);
+			}
+		} else {
+			for (iw = 0, offset = 0; iw < nw; iw++, offset += n) {
+				xd[i + offset] = NA_REAL;
+			}
+		}
+	);
+
+	UNPROTECT(1);
+	return d;
+}
+
+SEXP R_if97_ph(SEXP w, SEXP p, SEXP h)
+{
+	int iw, nw = length(w);
+	int ip, np = length(p);
+	int ih, nh = length(h);
+	int i, n = (np > nh ? np : nh);
+
+	SEXP d = PROTECT(allocMatrix(REALSXP, n, nw));
+	int *xw = INTEGER(w);
+	double *xp = REAL(p);
+	double *xh = REAL(h);
+	double *xd = REAL(d);
+
+	iapws_phi gamma;
+	int offset;
+	MOD_ITERATE2_CHECK(NINTERRUPT, n, np, nh, i, ip, ih,
+		if (if97_gamma_ph(xp[ip], xh[ih], &gamma) == 0) {
 			for (iw = 0, offset = 0; iw < nw; iw++, offset += n) {
 				xd[i + offset] = if97_a[xw[iw]](&gamma);
 			}
@@ -170,6 +199,37 @@ SEXP R_iapws95_pt(SEXP w, SEXP p, SEXP t, SEXP s)
 	return d;
 }
 
+SEXP R_iapws95_ph(SEXP w, SEXP p, SEXP h)
+{
+	int iw, nw = length(w);
+	int ip, np = length(p);
+	int ih, nh = length(h);
+	int i, n = (np > nh ? np : nh);
+
+	SEXP d = PROTECT(allocMatrix(REALSXP, n, nw));
+	int *xw = INTEGER(w);
+	double *xp = REAL(p);
+	double *xh = REAL(h);
+	double *xd = REAL(d);
+
+	iapws_phi phi;
+	int offset;
+	MOD_ITERATE2_CHECK(NINTERRUPT, n, np, nh, i, ip, ih,
+		if (iapws95_phi_ph(xp[ip], xh[ih], &phi) == 0) {
+			for (iw = 0, offset = 0; iw < nw; iw++, offset += n) {
+				xd[i + offset] = iapws95_a[xw[iw]](&phi);
+			}
+		} else {
+			for (iw = 0, offset = 0; iw < nw; iw++, offset += n) {
+				xd[i + offset] = NA_REAL;
+			}
+		}
+	);
+
+	UNPROTECT(1);
+	return d;
+}
+
 SEXP R_iapws95_sat(SEXP w, SEXP t)
 {
 	int iw, nw = length(w);
@@ -232,6 +292,13 @@ SEXP R_iapws95_sat_p(SEXP w, SEXP t)
 	return d;
 }
 
+MAKE_R_FUN_1(sat_p, double, double)
+MAKE_R_FUN_1(sat_rhol, double, double)
+MAKE_R_FUN_1(sat_rhog, double, double)
+
+MAKE_R_FUN_2(melt_p, double, int, double)
+MAKE_R_FUN_1(sub_p, double, double)
+
 SEXP R_nroot_control(SEXP trace, SEXP maxit, SEXP abstol, SEXP reltol)
 {
 	nroot_verbose = asInteger(trace);
@@ -241,33 +308,30 @@ SEXP R_nroot_control(SEXP trace, SEXP maxit, SEXP abstol, SEXP reltol)
 	return R_NilValue;
 }
 
-#if REGISTER_IAPWS_SAT
-	MAKE_R_FUN_1(sat_p, double, double)
-	MAKE_R_FUN_1(sat_rhol, double, double)
-	MAKE_R_FUN_1(sat_rhog, double, double)
-#endif
-
 #define ADDENTRY(f, n) {"C_" # f, (DL_FUNC) &R_ ## f, n}
 
 static const R_CallMethodDef CallEntries[] = {
-	ADDENTRY(if97_region,	2),
+	//ADDENTRY(if97_region,	2),
+	//ADDENTRY(if97_region_ph,	2),
 	ADDENTRY(if97_state,	2),
 	ADDENTRY(if97_tsat,	1),
 	ADDENTRY(if97_psat,	1),
-	ADDENTRY(if97,	4),
+	ADDENTRY(if97,		4),
+	ADDENTRY(if97_ph,	3),
 	ADDENTRY(iapws95_state,	2),
 	ADDENTRY(iapws95_state_rhot,	2),
 	ADDENTRY(iapws95_sat,	2),
 	ADDENTRY(iapws95_sat_p,	2),
 	ADDENTRY(iapws95,	3),
 	ADDENTRY(iapws95_pt,	4),
+	ADDENTRY(iapws95_ph,	3),
 	ADDENTRY(nroot_control,	4),
-#if REGISTER_IAPWS_SAT
-	ADDENTRY(sat_p,	1),
+	ADDENTRY(sat_p,		1),
 	ADDENTRY(sat_rhol,	1),
 	ADDENTRY(sat_rhog,	1),
-#endif
-	{NULL, NULL, 0},
+	ADDENTRY(melt_p,	2),
+	ADDENTRY(sub_p,		1),
+	{ NULL, NULL, 0 },
 };
 
 void R_init_iapws(DllInfo *dll)

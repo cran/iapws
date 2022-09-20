@@ -26,6 +26,7 @@
 
 int iapws95_phi(double rho, double t, iapws_phi *phi);
 int iapws95_phi_pt(double p, double t, iapws_state_id state, iapws_phi *phi);
+int iapws95_phi_ph(double p, double h, iapws_phi *phi);
 int iapws95_sat(double t, iapws_phi *phil, iapws_phi *phig);
 int iapws95_sat_p(double p, iapws_phi *phil, iapws_phi *phig);
 iapws_state_id iapws95_state(double p, double t);

@@ -1,4 +1,5 @@
 export(if97)
+export(if97_ph)
 export(if97_psat)
 export(if97_tsat)
 export(if97_state)
@@ -6,6 +7,7 @@ export(if97_state)
 
 export(iapws95)
 export(iapws95_pt)
+export(iapws95_ph)
 export(iapws95_sat)
 export(iapws95_sat_p)
 export(iapws95_state)

@@ -24,9 +24,10 @@
 #define POW(x, y)	R_pow((x), (y))
 #define POWINT(x, y)	R_pow_di((x), (y))
 
-#define IAPWS_TC	647.096		/* K	   */
-#define IAPWS_RHOC	322.0		/* kg/m3   */
-#define IAPWS_PC	22.064		/* MPa	   */
+/* Critical point */
+#define IAPWS_TC	647.096		/* K     */
+#define IAPWS_RHOC	322.0		/* kg/m3 */
+#define IAPWS_PC	22.064		/* MPa   */
 
 typedef enum {
 	IAPWS_UNDEF = -1,
@@ -45,7 +46,7 @@ typedef struct {
 	double d11;
 	double d20;
 	double d02;
-	double p, rho, t;
+	double p, rho, t, h;
 	double R;
 } iapws_phi;
 

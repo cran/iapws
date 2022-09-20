@@ -333,6 +333,45 @@ int iapws95_phi_pt(double p, double t, iapws_state_id state, iapws_phi *phi)
 			&tolf, &tolx, &maxiter, nroot_verbose);
 }
 
+static void get_phi_ph(double *rhot, void *xphi, double *ph, double *dph)
+{
+	double rho = rhot[0];
+	double t = rhot[1];
+
+	iapws_phi *phi = (iapws_phi *)(xphi);
+	iapws95_phi(rho, t, phi);
+
+	ph[0] = phi->d10 * rho * phi->R * t * 1e-3 - phi->p;
+	ph[1] = (phi->d10 + phi->d01) * phi->R * t - phi->h;
+
+	dph[0] = (phi->d10 * 2.0 + phi->d20) * phi->R * t * 1e-3;
+	dph[1] = (phi->d10 + phi->d20 + phi->d11) / rho * phi->R * t;
+	dph[2] = (phi->d10 - phi->d11) * rho * phi->R * 1e-3;
+	dph[3] = (phi->d10 - phi->d11 - phi->d02) * phi->R;
+}
+
+int iapws95_phi_ph(double p, double h, iapws_phi *phi)
+{
+	int maxiter = nroot_maxiter;
+	double tolf = nroot_tolf;
+	double tolx = nroot_tolx;
+
+	/* Find suitable start value for rho, t */
+	double rhot[2];
+	double p0 = p, h0 = h;
+	if (p > 1.0e2) p0 = 1.0e2;
+	if (h < 0.0) h0 = 0.0;
+	else if (h > 4.0e3) h0 = 4.0e3;
+	if (if97_gamma_ph(p0, h0, phi) != 0) return -10;
+	rhot[0] = iapws_rho(phi);
+	rhot[1] = iapws_t(phi);
+
+	phi->p = p;
+	phi->h = h;
+	return nroot2(get_phi_ph, rhot, phi,
+			&tolf, &tolx, &maxiter, nroot_verbose);
+}
+
 static void get_sat(double *x, void *xphi, double *fx, double *dfx)
 {
 	double rhol = x[0];
@@ -412,7 +451,7 @@ iapws_state_id iapws95_state(double p, double t)
 	double ps;
 	iapws_phi phil, phig;
 
-	if (t >= 273.16 && t < IAPWS_TC && p < 623.15) {
+	if (t >= 273.16 && t < IAPWS_TC && p < 620.0) {
 		/* Try with fast approximation */
 		ps = sat_p(t);
 		if (p > ps * PEPS) return IAPWS_LIQUID;

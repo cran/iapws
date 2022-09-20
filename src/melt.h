@@ -22,11 +22,11 @@
 #include "iapws.h"
 
 typedef enum {
-	ICE_1H,
-	ICE_3,
-	ICE_5,
-	ICE_6,
-	ICE_7,
+	ICE_IH  = 1,
+	ICE_III = 3,
+	ICE_V   = 5,
+	ICE_VI  = 6,
+	ICE_VII = 7,
 } ice_phase_id;
 
 double melt_p(double t, ice_phase_id phase);

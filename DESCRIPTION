@@ -1,6 +1,6 @@
 Package: iapws
-Version: 0.12
-Date: 2022-09-13
+Version: 0.13
+Date: 2022-09-20
 Title: Formulations of the International Association for the Properties
         of Water and Steam
 Authors@R: person("Jonathan", "Debove", role = c("aut", "cre"),
@@ -13,8 +13,8 @@ Description: Implementation of some of the formulations for the thermodynamic
 	R12-08 and R15-11 at <http://iapws.org>.
 License: GPL (>= 3)
 NeedsCompilation: yes
-Packaged: 2022-09-13 06:02:06 UTC; jon
+Packaged: 2022-09-20 05:41:51 UTC; jon
 Author: Jonathan Debove [aut, cre]
 Maintainer: Jonathan Debove <jondebove@gmail.com>
 Repository: CRAN
-Date/Publication: 2022-09-13 06:30:02 UTC
+Date/Publication: 2022-09-20 06:06:10 UTC
