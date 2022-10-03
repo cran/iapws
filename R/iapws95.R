@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-iapws95 <- function(what, rho, t)
+.iapws95 <- function(what, rho, t)
 {
 	w <- .check_what(what)
 	x <- callWrapper(C_iapws95, w = w, r = rho, t = t,
@@ -23,52 +23,58 @@ iapws95 <- function(what, rho, t)
 	x
 }
 
-iapws95_pt <- function(what, p, t, state = iapws95_state(p, t))
+iapws95 <- function(what, p, t, rho, h, state = NULL)
 {
 	w <- .check_what(what)
-	s <- .check_state(state)
-	x <- callWrapper(C_iapws95_pt, w = w, p = p, t = t, s = s,
-			 what = c("integer", "double", "double", "integer"))
+	x <- if (!missing(p) && !missing(t)) {
+		if (is.null(state)) {
+			state <- iapws95_state(p = p, t = t)
+		}
+		s <- .check_state(state)
+		callWrapper(C_iapws95_pt, w = w, p = p, t = t, s = s,
+			    what = c("integer", "double", "double", "integer"))
+	} else if (!missing(rho) && !missing(t)) {
+		if (is.null(state)) {
+			state <- iapws95_state(rho = rho, t = t)
+		}
+		s <- .check_state(state)
+		callWrapper(C_iapws95_rhot, w = w, r = rho, t = t, s = s,
+			    what = c("integer", "double", "double"))
+	} else if (!missing(p) && !missing(h)) {
+		callWrapper(C_iapws95_ph, w = w, p = p, h = h,
+			    what = c("integer", "double", "double"))
+	} else {
+		stop("invalid combination of arguments")
+	}
 	colnames(x) <- what
 	x
 }
 
-iapws95_ph <- function(what, p, h)
+iapws95_sat <- function(what, p, t)
 {
 	w <- .check_what(what)
-	x <- callWrapper(C_iapws95_ph, w = w, p = p, h = h,
-			 what = c("integer", "double", "double"))
-	colnames(x) <- what
-	x
-}
-
-iapws95_sat <- function(what, t)
-{
-	w <- .check_what(what)
-	x <- callWrapper(C_iapws95_sat, w = w, t = t,
-			 what = c("integer", "double"))
+	x <- if (!missing(t)) {
+		callWrapper(C_iapws95_sat_t, w = w, t = t,
+			    what = c("integer", "double"))
+	} else if (!missing(p)) {
+		callWrapper(C_iapws95_sat_p, w = w, p = p,
+			    what = c("integer", "double"))
+	} else {
+		stop("invalid combination of arguments")
+	}
 	dimnames(x) <- list(NULL, what, c("liquid", "gas"))
 	x
 }
 
-iapws95_sat_p <- function(what, p)
+iapws95_state <- function(p, t, rho)
 {
-	w <- .check_what(what)
-	x <- callWrapper(C_iapws95_sat_p, w = w, p = p,
-			 what = c("integer", "double"))
-	dimnames(x) <- list(NULL, what, c("liquid", "gas"))
-	x
-}
-
-iapws95_state <- function(p, t)
-{
-	s <- callWrapper(C_iapws95_state, p = p, t = t)
-	names(.IAPWS_STATES)[match(s, .IAPWS_STATES)]
-}
-
-iapws95_state_rhot <- function(rho, t)
-{
-	s <- callWrapper(C_iapws95_state_rhot, rho = rho, t = t)
+	s <- if (!missing(p) && !missing(t)) {
+		callWrapper(C_iapws95_state_pt, p = p, t = t)
+	} else if (!missing(rho) && !missing(t)) {
+		callWrapper(C_iapws95_state_rhot, rho = rho, t = t)
+	} else {
+		stop("invalid combination of arguments")
+	}
 	names(.IAPWS_STATES)[match(s, .IAPWS_STATES)]
 }
 

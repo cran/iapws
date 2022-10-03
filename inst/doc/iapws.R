@@ -19,9 +19,9 @@ iapws95(c("p", "h"), rho = 800, t = seq(573, 623, by = 10))
 
 
 ###################################################
-### code chunk number 4: iapws.Rnw:64-66
+### code chunk number 4: iapws.Rnw:63-65
 ###################################################
-iapws95_pt(c("rho", "h"), p = 0.1013125,  # atmospheric pressure
-	   t = seq(293, 373, by = 20))
+iapws95(c("rho", "h"), p = 0.101325,  # atmospheric pressure
+	t = seq(293, 373, by = 20))
 
 

@@ -16,23 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef IAPWS_NROOT_H
-#define IAPWS_NROOT_H
+#include "pow.h"
 
-typedef struct {
-	int trace;
-	int maxit;
-	double abstol;
-	double reltol;
-} nroot_control;
-extern nroot_control nroot_default;
+extern inline double powint(double x, int i);
 
-typedef void root_fun(double *x, void *prms, double *fx, double *dfx);
-
-int nroot1(root_fun fun, double *x, void *prms, nroot_control *ctrl);
-int nroot2(root_fun fun, double *x, void *prms, nroot_control *ctrl);
-int nrootn(int n, root_fun fun, double *x, void *prms, nroot_control *ctrl);
-
-int sroot(root_fun fun, double *x, void *prms, nroot_control *ctrl);
-
-#endif

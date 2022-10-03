@@ -25,7 +25,8 @@
 #include <math.h>
 
 #include "iapws.h"
-#include "melt.h"
+#include "melt08.h"
+#include "pow.h"
 
 static const double tmelt[] = {
 	273.16,

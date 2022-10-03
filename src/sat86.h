@@ -16,23 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef IAPWS_NROOT_H
-#define IAPWS_NROOT_H
+#ifndef IAPWS_SAT86_H
+#define IAPWS_SAT86_H
 
-typedef struct {
-	int trace;
-	int maxit;
-	double abstol;
-	double reltol;
-} nroot_control;
-extern nroot_control nroot_default;
-
-typedef void root_fun(double *x, void *prms, double *fx, double *dfx);
-
-int nroot1(root_fun fun, double *x, void *prms, nroot_control *ctrl);
-int nroot2(root_fun fun, double *x, void *prms, nroot_control *ctrl);
-int nrootn(int n, root_fun fun, double *x, void *prms, nroot_control *ctrl);
-
-int sroot(root_fun fun, double *x, void *prms, nroot_control *ctrl);
+double sat86_p(double t);
+double sat86_rhol(double t);
+double sat86_rhog(double t);
 
 #endif

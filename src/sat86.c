@@ -24,6 +24,7 @@
 #include <math.h>
 
 #include "iapws.h"
+#include "pow.h"
 
 static inline double sum6pow(const double x, const double a[], const int I[])
 {
@@ -32,7 +33,7 @@ static inline double sum6pow(const double x, const double a[], const int I[])
 		a[4] * POWINT(x, I[4]) + a[5] * POWINT(x, I[5]);
 }
 
-double sat_p(double t)
+double sat86_p(double t)
 {
 	const int I[6] = { 2, 3, 6, 7, 8, 15 };
 	const double a[6] = {
@@ -40,11 +41,11 @@ double sat_p(double t)
 		 22.6807411, -15.9618719,  1.80122502,
 	};
 	double theta = t / IAPWS_TC;
-	if (t < 273.16 || t > IAPWS_TC) return 0.0;
+	if (t < IAPWS_TT || t > IAPWS_TC) return 0.0;
 	return exp(sum6pow(sqrt(1.0 - theta), a, I) / theta) * IAPWS_PC;
 }
 
-double sat_rhol(double t)
+double sat86_rhol(double t)
 {
 	const int I[6] = { 1, 2, 5, 16, 43, 110 };
 	const double b[6] = {
@@ -52,11 +53,11 @@ double sat_rhol(double t)
 		-1.75493479, -45.5170352, -6.74694450e5,
 	};
 	double theta = t / IAPWS_TC;
-	if (t < 273.16 || t > IAPWS_TC) return 0.0;
+	if (t < IAPWS_TT || t > IAPWS_TC) return 0.0;
 	return (sum6pow(cbrt(1.0 - theta), b, I) + 1.0) * IAPWS_RHOC;
 }
 
-double sat_rhog(double t)
+double sat86_rhog(double t)
 {
 	const int I[6] = { 2, 4, 8, 18, 37, 71 };
 	const double c[6] = {
@@ -64,7 +65,7 @@ double sat_rhog(double t)
 		-17.2991605, -44.7586581, -63.9201063,
 	};
 	double theta = t / IAPWS_TC;
-	if (t < 273.16 || t > IAPWS_TC) return 0.0;
+	if (t < IAPWS_TT || t > IAPWS_TC) return 0.0;
 	return exp(sum6pow(POW(1.0 - theta, 1.0 / 6.0), c, I)) * IAPWS_RHOC;
 }
 

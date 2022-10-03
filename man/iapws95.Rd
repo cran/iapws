@@ -1,7 +1,5 @@
 \name{iapws95}
 \alias{iapws95}
-\alias{iapws95_pt}
-\alias{iapws95_ph}
 \title{
   IAPWS-95 Formulation in Single Phase Regions
 }
@@ -10,34 +8,34 @@
   using the IAPWS formulation 1995.
 }
 \usage{
-iapws95(what, rho, t)
-iapws95_pt(what, p, t, state = iapws95_state(p, t))
-iapws95_ph(what, p, h)
+iapws95(what, p, t, rho, h, state = NULL)
 }
 \arguments{
   \item{what}{
     a character vector listing the output properties.
     See Details for available properties.
   }
-  \item{rho}{
-    a numeric vector giving the values of density in kg/m^3.
+  \item{p}{
+    a numeric vector giving the pressure values in MPa.
   }
   \item{t}{
     a numeric vector giving the temperature values in K.
   }
-  \item{p}{
-    a numeric vector giving the pressure values in MPa.
+  \item{rho}{
+    a numeric vector giving the values of density in kg/m^3.
   }
   \item{h}{
     a numeric vector giving the specific enthalpy values in kJ/kg.
   }
   \item{state}{
-    a character vector giving the physical state. One of
-    \code{"liquid"}, \code{"gas"} or \code{"supercritical"}.
+    \code{NULL} or a character vector giving the physical state.
+    One of \code{"liquid"}, \code{"gas"} or \code{"supercritical"}.
+    In case of \code{NULL}, the state is determined by the function
+    \code{iapws95_state()}.
   }
 }
 \details{
-  The currently available properties are:
+  The available properties for \code{what} are:
   \itemize{
     \item \code{"f"}: the specific free energy in kJ/kg.
     \item \code{"g"}: the specific Gibbs enthalpy in kJ/kg.
@@ -52,17 +50,21 @@ iapws95_ph(what, p, h)
     \item \code{"cp"}: the specific isobaric heat capacity in kJ/K/kg.
     \item \code{"alpha"}: the expansion coefficient in 1/K
     \item \code{"beta"}: the pressure coefficient in MPa/K.
-    \item \code{"chit"}: the isothermal compressibility in 1/MPa.
+    \item \code{"kappat"}: the isothermal compressibility in 1/MPa.
     \item \code{"w"}: the speed of sound in m/s.
     \item \code{"eta"}: the dynamic viscosity in \eqn{10^{-6}}Pa.s.
     \item \code{"lambda"}: the thermal conductivity in mW/K/m.
     \item \code{"sigma"}: the surface tension in mN/m.
     \item \code{"epsilon"}: the dielectric constant.
   }
+
+  A valid pair of \code{p}, \code{rho}, \code{t} and \code{h} is needed:
+  either \code{(p, t)}, \code{(rho, t)} or \code{(p, h)}.
 }
 \value{
   A numeric matrix of dimension \code{c(n, length(what))} with \code{n}
-  the maximum length of either \code{rho}, \code{p}, \code{t} or \code{state}.
+  the maximum length of either \code{rho}, \code{p}, \code{t}, \code{h}
+  or \code{state}.
 }
 \references{
   International Association for the Properties of Water and Steam,
@@ -96,18 +98,18 @@ iapws95_ph(what, p, h)
 }
 \examples{
 # IAPWS-95 Tab. 7
-tab7 <- iapws95(c("p", "cv", "w", "s"),
-                t = c(300, 300, 300,
-                      500, 500, 500, 500,
-                      647,
-                      900, 900, 900),
-                rho = c(0.9965560e3, 0.1005308e4, 0.1188202e4,
-                        0.4350000e0, 0.4532000e1, 0.8380250e3, 0.1084564e4,
-                        0.3580000e3,
-                        0.2410000e0, 0.5261500e2, 0.8707690e3))
-format(tab7, scientific = TRUE, digits = 9)
+tab <- iapws95(c("p", "cv", "w", "s"),
+               t = c(300, 300, 300,
+                     500, 500, 500, 500,
+                     647,
+                     900, 900, 900),
+               rho = c(0.9965560e3, 0.1005308e4, 0.1188202e4,
+                       0.4350000e0, 0.4532000e1, 0.8380250e3, 0.1084564e4,
+                       0.3580000e3,
+                       0.2410000e0, 0.5261500e2, 0.8707690e3))
+format(tab, scientific = TRUE, digits = 9)
 \dontshow{
-stopifnot(all.equal(tab7[, "p", drop = FALSE],
+stopifnot(all.equal(tab[, "p", drop = FALSE],
           matrix(c(0.992418352e-1, 0.200022515e2, 0.700004704e3,
                    0.999679423e-1, 0.999938125e0, 0.100003858e2,
                    0.700000405e3, 0.220384756e2,
@@ -116,18 +118,18 @@ stopifnot(all.equal(tab7[, "p", drop = FALSE],
 }
 
 # Viscosity Tab. 4
-tab4 <- iapws95("eta",
-                t = c(298.15, 298.15, 373.15,
-                      433.15, 433.15,
-                      873.15, 873.15, 873.15,
-                      1173.15, 1173.15, 1173.15),
-                rho = c(998, 1200, 1000,
-                        1, 1000,
-                        1, 100, 600,
-                        1, 100, 400))
-format(tab4, digits = 8)
+tab <- iapws95("eta",
+               t = c(298.15, 298.15, 373.15,
+                     433.15, 433.15,
+                     873.15, 873.15, 873.15,
+                     1173.15, 1173.15, 1173.15),
+               rho = c(998, 1200, 1000,
+                       1, 1000,
+                       1, 100, 600,
+                       1, 100, 400))
+format(tab, digits = 8)
 \dontshow{
-stopifnot(all.equal(tab4[, "eta", drop = FALSE],
+stopifnot(all.equal(tab[, "eta", drop = FALSE],
           matrix(c(889.735100, 1437.649467, 307.883622,
                    14.538324, 217.685358,
                    32.619287, 35.802262, 77.430195,
@@ -136,50 +138,48 @@ stopifnot(all.equal(tab4[, "eta", drop = FALSE],
 }
 
 # Viscosity Tab. 5
-tab5 <- iapws95("eta", t = 647.35,
-                rho = c(122, 222, 272, 322, 372, 422))
-format(tab5, digits = 8)
+tab <- iapws95("eta", t = 647.35, rho = c(122, 222, 272, 322, 372, 422))
+format(tab, digits = 8)
 \dontshow{
-stopifnot(all.equal(tab5[, "eta", drop = FALSE],
+stopifnot(all.equal(tab[, "eta", drop = FALSE],
           matrix(c(25.520677, 31.337589, 36.228143,
                    42.961579, 45.688204, 49.436256),
                  6, 1, dimnames = list(NULL, c("eta"))), tolerance = 1e-8))
 }
 
 # Thermal conductivity Tab. 4
-tab4 <- iapws95("lambda",
-                t = c(298.15, 298.15, 298.15, 873.15),
-                rho = c(0, 998, 1200, 0))
-format(tab4, digits = 9)
+tab <- iapws95("lambda", t = c(298.15, 298.15, 298.15, 873.15),
+               rho = c(0, 998, 1200, 0))
+format(tab, digits = 9)
 \dontshow{
-stopifnot(all.equal(tab4[, "lambda", drop = FALSE],
+stopifnot(all.equal(tab[, "lambda", drop = FALSE],
           matrix(c(18.4341883, 607.712868, 799.038144, 79.1034659),
                  4, 1, dimnames = list(NULL, c("lambda"))), tolerance = 1e-9))
 }
 
 # Thermal conductivity Tab. 5
-tab5 <- iapws95("lambda", t = 647.35,
-                rho = c(1, 122, 222, 272, 322, 372, 422, 750))
-format(tab5, digits = 9)
+tab <- iapws95("lambda", t = 647.35,
+               rho = c(1, 122, 222, 272, 322, 372, 422, 750))
+format(tab, digits = 9)
 \dontshow{
-stopifnot(all.equal(tab5[, "lambda", drop = FALSE],
+stopifnot(all.equal(tab[, "lambda", drop = FALSE],
           matrix(c(51.9298924, 130.922885, 367.787459, 757.959776,
                    1443.75556, 650.319402, 448.883487, 600.961346),
                  8, 1, dimnames = list(NULL, c("lambda"))), tolerance = 1e-9))
 }
 
 # Dielectric constant Tab. 4
-tab4 <- iapws95_pt("epsilon",
-                   p = c(0.1013125, 0.1013125, 10, 1000,
-                         10, 100, 500, 10, 100, 500),
-                   t = c(240, 300, 300, 300,
-                         650, 650, 650, 870, 870, 870),
-                   state = c(rep("liquid", 4),
-                             "gas", rep("supercritical", 2),
-                             "gas", rep("supercritical", 2)))
-format(tab4, digits = 6)
+tab <- iapws95("epsilon",
+               p = c(0.1013125, 0.1013125, 10, 1000,
+                     10, 100, 500, 10, 100, 500),
+               t = c(240, 300, 300, 300,
+                     650, 650, 650, 870, 870, 870),
+               state = c(rep("liquid", 4),
+                         "gas", rep("supercritical", 2),
+                         "gas", rep("supercritical", 2)))
+format(tab, digits = 6)
 \dontshow{
-stopifnot(all.equal(tab4[, "epsilon", drop = FALSE],
+stopifnot(all.equal(tab[, "epsilon", drop = FALSE],
           matrix(c(104.34982, 77.74735, 78.11269, 103.69632, 1.26715,
                    17.71733, 26.62132, 1.12721, 4.98281, 15.09746),
                  10, 1, dimnames = list(NULL, c("epsilon"))), tolerance = 1e-7))

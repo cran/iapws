@@ -27,9 +27,10 @@
 
 #include "iapws95.h"
 #include "if97.h"
-#include "sat.h"
-#include "melt.h"
+#include "sat86.h"
+#include "melt08.h"
 #include "nroot.h"
+#include "pow.h"
 
 enum {
 	SIZE0 = 8,
@@ -198,12 +199,12 @@ static void calc_psi(int i, double delta, double tau, iapws_phi *psi)
 	psi->d11 = psi0 * dm1 * tm1 * coef4[i].C * coef4[i].D * 4.0;
 }
 
-int iapws95_phi(double rho, double t, iapws_phi *phi)
+void iapws95_phi(double rho, double t, iapws_phi *phi)
 {
 	int i;
 	const double delta = rho / IAPWS_RHOC;
 	const double tau = IAPWS_TC / t;
-	double xn, egt, dc, tc;
+	double xd, xt, xn, egt, dc, tc;
 	iapws_phi Db, psi;
 
 	phi->type = IAPWS_PHI;
@@ -228,8 +229,8 @@ int iapws95_phi(double rho, double t, iapws_phi *phi)
 
 	/* phir */
 	for (i = 0; i < SIZE1; ++i) {
-		xn = coef1[i].n *
-			POWINT(delta, coef1[i].d) * POW(tau, coef1[i].t);
+		xn = coef1[i].n * powint(delta, coef1[i].d) *
+			POW(tau, coef1[i].t);
 		phi->d00 += xn;
 		phi->d10 += xn * coef1[i].d; 
 		phi->d01 += xn * coef1[i].t;
@@ -238,9 +239,16 @@ int iapws95_phi(double rho, double t, iapws_phi *phi)
 		phi->d02 += xn * coef1[i].t * (coef1[i].t - 1);
 	}
 	for (i = 0; i < SIZE2; ++i) {
-		dc = POWINT(delta, coef2[i].c);
-		xn = coef2[i].n * exp(-dc) *
-			POWINT(delta, coef2[i].d) * POWINT(tau, coef2[i].t);
+		if (i != 0) {
+			dc *= powint(delta, coef2[i].c - coef2[i - 1].c);
+			xd *= powint(delta, coef2[i].d - coef2[i - 1].d);
+			xt *= powint(tau, coef2[i].t - coef2[i - 1].t);
+		} else {
+			dc = powint(delta, coef2[i].c);
+			xd = powint(delta, coef2[i].d);
+			xt = powint(tau, coef2[i].t);
+		}
+		xn = coef2[i].n * exp(-dc) * xd * xt;
 		phi->d00 += xn;
 		phi->d10 += xn * (coef2[i].d - coef2[i].c * dc);
 		phi->d01 += xn * coef2[i].t;
@@ -251,11 +259,18 @@ int iapws95_phi(double rho, double t, iapws_phi *phi)
 		phi->d02 += xn * coef2[i].t * (coef2[i].t - 1);
 	}
 	for (i = 0; i < SIZE3; ++i) {
+		if (i != 0) {
+			xd *= powint(delta, coef3[i].d - coef3[i - 1].d);
+			xt *= powint(tau, coef3[i].t - coef3[i - 1].t);
+		} else {
+			xd = powint(delta, coef3[i].d);
+			xt = powint(tau, coef3[i].t);
+		}
 		dc = delta - coef3[i].eps;
 		tc = tau - coef3[i].gamma;
-		xn = coef3[i].n *
-			POWINT(delta, coef3[i].d) * POWINT(tau, coef3[i].t) *
-			exp(-coef3[i].alpha * dc * dc -coef3[i].beta * tc * tc);
+		xn = coef3[i].n * xd * xt *
+			exp(-coef3[i].alpha * dc * dc
+					-coef3[i].beta * tc * tc);
 		phi->d00 += xn;
 		phi->d10 += xn * (coef3[i].d - delta * 2 * coef3[i].alpha * dc);
 		phi->d01 += xn * (coef3[i].t - tau * 2 * coef3[i].beta * tc);
@@ -287,7 +302,23 @@ int iapws95_phi(double rho, double t, iapws_phi *phi)
 					Db.d02 * psi.d00) * POW2(tau);
 		}
 	}
-	return 0;
+}
+
+#define PEPS	1.0001
+#define REPS	1.01
+
+int iapws95_phi_rhot(double rho, double t, iapws_state_id state, iapws_phi *phi)
+{
+	switch (state) {
+		case IAPWS_LIQUID:
+		case IAPWS_GAS:
+		case IAPWS_CRIT:
+			iapws95_phi(rho, t, phi);
+			return 0;
+		default:
+			return -1;
+	}
+	assert(0);
 }
 
 static void get_phi_pt(double *rho, void *xphi, double *p, double *dp)
@@ -299,14 +330,9 @@ static void get_phi_pt(double *rho, void *xphi, double *p, double *dp)
 	*dp = (phi->d10 * 2.0 + phi->d20) * fact;
 }
 
-#define PEPS	1.0001
-#define REPS	1.01
-
 int iapws95_phi_pt(double p, double t, iapws_state_id state, iapws_phi *phi)
 {
-	int maxiter = nroot_maxiter;
-	double tolf = nroot_tolf;
-	double tolx = nroot_tolx;
+	nroot_control ctrl = nroot_default;
 
 	/* Find suitable start value for rho */
 	/* May be more effective if test t0 before p0 */
@@ -318,9 +344,8 @@ int iapws95_phi_pt(double p, double t, iapws_state_id state, iapws_phi *phi)
 	} else {
 		if (t0 > 1073.15) t0 = 1073.15;
 	}
-	if (if97_gamma(p0, t0, state, phi) != 0) return -10;
-	rho = iapws_v(phi);
-	rho = rho != 0.0 ? 1.0 / rho : IAPWS_RHOC;
+	if (if97_gamma_pt(p0, t0, state, phi) != 0) return -10;
+	rho = iapws_rho(phi);
 	if (state == IAPWS_LIQUID) {
 		rho *= REPS;
 	} else if (state == IAPWS_GAS) {
@@ -329,8 +354,7 @@ int iapws95_phi_pt(double p, double t, iapws_state_id state, iapws_phi *phi)
 
 	phi->p = p;
 	phi->t = t;
-	return nroot1(get_phi_pt, &rho, phi,
-			&tolf, &tolx, &maxiter, nroot_verbose);
+	return nroot1(get_phi_pt, &rho, phi, &ctrl);
 }
 
 static void get_phi_ph(double *rhot, void *xphi, double *ph, double *dph)
@@ -352,9 +376,7 @@ static void get_phi_ph(double *rhot, void *xphi, double *ph, double *dph)
 
 int iapws95_phi_ph(double p, double h, iapws_phi *phi)
 {
-	int maxiter = nroot_maxiter;
-	double tolf = nroot_tolf;
-	double tolx = nroot_tolx;
+	nroot_control ctrl = nroot_default;
 
 	/* Find suitable start value for rho, t */
 	double rhot[2];
@@ -368,11 +390,10 @@ int iapws95_phi_ph(double p, double h, iapws_phi *phi)
 
 	phi->p = p;
 	phi->h = h;
-	return nroot2(get_phi_ph, rhot, phi,
-			&tolf, &tolx, &maxiter, nroot_verbose);
+	return nroot2(get_phi_ph, rhot, phi, &ctrl);
 }
 
-static void get_sat(double *x, void *xphi, double *fx, double *dfx)
+static void get_sat_t(double *x, void *xphi, double *fx, double *dfx)
 {
 	double rhol = x[0];
 	double rhog = x[1];
@@ -391,18 +412,17 @@ static void get_sat(double *x, void *xphi, double *fx, double *dfx)
 	dfx[3] = dfx[2] / rhog;
 }
 
-int iapws95_sat(double t, iapws_phi *phil, iapws_phi *phig)
+int iapws95_sat_t(double t, iapws_phi *phil, iapws_phi *phig)
 {
-	int maxiter = nroot_maxiter;
-	double tolf = nroot_tolf;
-	double tolx = nroot_tolx;
+	nroot_control ctrl = nroot_default;
+
 	iapws_phi *phi[2] = { phil, phig };
 	double p = if97_psat(t);
 	if (p == 0.0) return -1;  /* test if outside of saturation line */
-	if (if97_gamma(p, t, IAPWS_LIQUID, phil) != 0) return -11;
-	if (if97_gamma(p, t, IAPWS_GAS, phig) != 0) return -12;
+	if (if97_gamma_pt(p, t, IAPWS_LIQUID, phil) != 0) return -11;
+	if (if97_gamma_pt(p, t, IAPWS_GAS, phig) != 0) return -12;
 	double x[2] = { iapws_rho(phil) * REPS, iapws_rho(phig) / REPS };
-	return nroot2(get_sat, x, phi, &tolf, &tolx, &maxiter, nroot_verbose);
+	return nroot2(get_sat_t, x, phi, &ctrl);
 }
 
 static void get_sat_p(double *x, void *xphi, double *fx, double *dfx)
@@ -433,31 +453,29 @@ static void get_sat_p(double *x, void *xphi, double *fx, double *dfx)
 
 int iapws95_sat_p(double p, iapws_phi *phil, iapws_phi *phig)
 {
-	int maxiter = nroot_maxiter;
-	double tolf = nroot_tolf;
-	double tolx = nroot_tolx;
+	nroot_control ctrl = nroot_default;
+
 	iapws_phi *phi[2] = { phil, phig };
 	double t = if97_tsat(p);
 	if (t == 0.0) return -1;  /* test if outside of saturation line */
-	if (if97_gamma(p, t, IAPWS_LIQUID, phil) != 0) return -11;
-	if (if97_gamma(p, t, IAPWS_GAS, phig) != 0) return -12;
+	if (if97_gamma_pt(p, t, IAPWS_LIQUID, phil) != 0) return -11;
+	if (if97_gamma_pt(p, t, IAPWS_GAS, phig) != 0) return -12;
 	double x[3] = { iapws_rho(phil) * REPS, iapws_rho(phig) / REPS, t };
-	return nrootn(3, get_sat_p, x, phi,
-			&tolf, &tolx, &maxiter, nroot_verbose);
+	return nrootn(3, get_sat_p, x, phi, &ctrl);
 }
 
-iapws_state_id iapws95_state(double p, double t)
+iapws_state_id iapws95_state_pt(double p, double t)
 {
 	double ps;
 	iapws_phi phil, phig;
 
-	if (t >= 273.16 && t < IAPWS_TC && p < 620.0) {
+	if (t >= IAPWS_TT && t < IAPWS_TC && p < 620.0) {
 		/* Try with fast approximation */
-		ps = sat_p(t);
+		ps = sat86_p(t);
 		if (p > ps * PEPS) return IAPWS_LIQUID;
 		if (p * PEPS < ps) return IAPWS_GAS;
 
-		iapws95_sat(t, &phil, &phig);
+		iapws95_sat_t(t, &phil, &phig);
 		ps = iapws_p(&phig);
 		if (p > ps) return IAPWS_LIQUID;
 		if (p < ps) return IAPWS_GAS;
@@ -475,16 +493,16 @@ iapws_state_id iapws95_state_rhot(double rho, double t)
 	double rhol, rhog;
 	iapws_phi phil, phig;
 
-	if (t >= 273.16 && t < IAPWS_TC) {
+	if (t >= IAPWS_TT && t < IAPWS_TC) {
 		/* Try with fast approximation */
-		rhol = sat_rhol(t);
-		rhog = sat_rhog(t);
+		rhol = sat86_rhol(t);
+		rhog = sat86_rhog(t);
 		if (rho > rhol * REPS) return IAPWS_LIQUID;
 		else if (rho * REPS < rhog) return IAPWS_GAS;
 		else if (rho * REPS < rhol && rho > rhog * REPS)
 			return IAPWS_SAT;
 
-		iapws95_sat(t, &phil, &phig);
+		iapws95_sat_t(t, &phil, &phig);
 		rhol = iapws_rho(&phil);
 		rhog = iapws_rho(&phig);
 		if (rho > rhol) return IAPWS_LIQUID;

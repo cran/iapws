@@ -1,6 +1,5 @@
 \name{if97}
 \alias{if97}
-\alias{if97_ph}
 \title{
   IAPWS-IF97 Equations for Regions 1, 2, 3 and 5
 }
@@ -9,8 +8,7 @@
   using the IAPWS industrial formulation 1997.
 }
 \usage{
-if97(what, p, t, state = if97_state(p, t))
-if97_ph(what, p, h)
+if97(what, p, t, h, state = NULL)
 }
 \arguments{
   \item{what}{
@@ -27,12 +25,14 @@ if97_ph(what, p, h)
     a numeric vector giving the specific enthalpy values in kJ/kg.
   }
   \item{state}{
-    a character vector giving the physical state. One of
-    \code{"liquid"}, \code{"gas"} or \code{"supercritical"}.
+    \code{NULL} or a character vector giving the physical state.
+    One of \code{"liquid"}, \code{"gas"} or \code{"supercritical"}.
+    In case of \code{NULL}, the state is determined by the function
+    \code{if97_state()}.
   }
 }
 \details{
-  The currently available properties are:
+  The available properties for \code{what} are:
   \itemize{
     \item \code{"f"}: the specific free energy in kJ/kg.
     \item \code{"g"}: the specific Gibbs enthalpy in kJ/kg.
@@ -47,17 +47,20 @@ if97_ph(what, p, h)
     \item \code{"cp"}: the specific isobaric heat capacity in kJ/K/kg.
     \item \code{"alpha"}: the expansion coefficient in 1/K
     \item \code{"beta"}: the pressure coefficient in MPa/K.
-    \item \code{"chit"}: the isothermal compressibility in 1/MPa.
+    \item \code{"kappat"}: the isothermal compressibility in 1/MPa.
     \item \code{"w"}: the speed of sound in m/s.
     \item \code{"eta"}: the dynamic viscosity in \eqn{10^{-6}}Pa.s.
     \item \code{"lambda"}: the thermal conductivity in mW/K/m.
     \item \code{"sigma"}: the surface tension in mN/m.
     \item \code{"epsilon"}: the dielectric constant.
   }
+
+  A valid pair of \code{p}, \code{t} and \code{h} is needed:
+  either \code{(p, t)} or \code{(p, h)}.
 }
 \value{
   A numeric matrix of dimension \code{c(n, length(what))} with \code{n}
-  the maximum length of either \code{p}, \code{t} or \code{state}.
+  the maximum length of either \code{p}, \code{t}, \code{h} or \code{state}.
 }
 \references{
   International Association for the Properties of Water and Steam,

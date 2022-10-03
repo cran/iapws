@@ -23,6 +23,7 @@
  */
 
 #include "iapws.h"
+#include "pow.h"
 
 static double dielec(double rho, double t)
 {
@@ -57,7 +58,7 @@ static double dielec(double rho, double t)
 
 	int i;
 	double a, b;
-	double g = 1.0 + coef[11].N * delta * POW(t / 228.0 - 1.0, -1.2);
+	double g = 1.0 + coef[11].N * delta * POW(t / 228.0 - 1.0, coef[11].j);
 	for (i = 0; i < SIZE - 1; ++i) {
 		g += coef[i].N *
 			POWINT(delta, coef[i].i) *

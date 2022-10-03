@@ -20,6 +20,7 @@
 #define IAPWS_IF97_H
 
 #include "iapws.h"
+#include "nroot.h"
 
 #define IF97_R		0.461526	/* kJ/kg/K */
 #define IF97_PT		611.657e-06	/* MPa */
@@ -33,12 +34,12 @@ typedef enum {
 	IF97_REGION_5 = 5,
 } if97_region_id;
 
-iapws_state_id if97_state(double p, double t);
-if97_region_id if97_region(double p, double t);
+iapws_state_id if97_state_pt(double p, double t);
+if97_region_id if97_region_pt(double p, double t);
 if97_region_id if97_region_ph(double p, double h);
 double if97_tsat(double p);
 double if97_psat(double t);
-int if97_gamma(double p, double t, iapws_state_id state, iapws_phi *gamma);
+int if97_gamma_pt(double p, double t, iapws_state_id state, iapws_phi *gamma);
 int if97_gamma_ph(double p, double h, iapws_phi *gamma);
 
 #endif

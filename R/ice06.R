@@ -14,43 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-if97 <- function(what, p, t, h, state = NULL)
+ice06 <- function(what, p, t)
 {
 	w <- .check_what(what)
-	x <- if (!missing(p) && !missing(t)) {
-		if (is.null(state)) {
-			state <- if97_state(p, t)
-		}
-		s <- .check_state(state)
-		callWrapper(C_if97_pt, w = w, p = p, t = t, s = s,
-			    what = c("integer", "double", "double", "integer"))
-	} else if (!missing(p) && !missing(h)) {
-		callWrapper(C_if97_ph, w = w, p = p, h = h,
-			    what = c("integer", "double", "double"))
-	} else {
-		stop("invalid combination of arguments")
-	}
+	x <- callWrapper(C_ice06_pt, w = w, p = p, t = t,
+			 what = c("integer", "double", "double"))
 	colnames(x) <- what
 	x
-}
-
-if97_psat <- function(t)
-{
-	x <- callWrapper(C_if97_psat, t = t)
-	is.na(x) <- x == 0
-	x
-}
-
-if97_tsat <- function(p)
-{
-	x <- callWrapper(C_if97_tsat, p = p)
-	is.na(x) <- x == 0
-	x
-}
-
-if97_state <- function(p, t)
-{
-	s <- callWrapper(C_if97_state_pt, p = p, t = t)
-	names(.IAPWS_STATES)[match(s, .IAPWS_STATES)]
 }
 

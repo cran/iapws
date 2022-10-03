@@ -22,6 +22,7 @@
  */
 
 #include "iapws.h"
+#include "pow.h"
 
 static double surf(double t)
 {

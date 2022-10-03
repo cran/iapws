@@ -186,7 +186,7 @@ double iapws_w(const iapws_phi *phi)  /* m/s */
 	return sqrt(ans * phi->R * phi->t * 1e3);
 }
 
-/* alpha = beta * chit */
+/* alpha = beta * kappat */
 /* -1/v dv/dt */
 double iapws_alpha(const iapws_phi *phi)  /* 1/K */
 {
@@ -216,7 +216,7 @@ double iapws_beta(const iapws_phi *phi)  /* MPa/K */
 }
 
 /* -1/v dv/dp */
-double iapws_chit(const iapws_phi *phi)  /* 1/MPa */
+double iapws_kappat(const iapws_phi *phi)  /* 1/MPa */
 {
 	switch (phi->type) {
 		case IAPWS_PHI:

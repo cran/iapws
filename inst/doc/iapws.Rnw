@@ -58,12 +58,11 @@ in MPa and specific enthalpies are in kJ/kg.
 The different output properties and their units are listed in the
 function documentation (type \code{help(iapws95)} to see them all).
 
-If more interested in isobaric properties, one can use the function
-\fun{iapws95\_pt} instead:
+If more interested in isobaric properties, one can use:
 
 <<>>=
-iapws95_pt(c("rho", "h"), p = 0.1013125,  # atmospheric pressure
-	   t = seq(293, 373, by = 20))
+iapws95(c("rho", "h"), p = 0.101325,  # atmospheric pressure
+	t = seq(293, 373, by = 20))
 @
 
 All the functions in \iapws{} are vectorized.

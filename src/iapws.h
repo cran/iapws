@@ -19,15 +19,16 @@
 #ifndef IAPWS_H
 #define IAPWS_H
 
-#include <Rmath.h>
-#define POW2(x)		((x) * (x))
-#define POW(x, y)	R_pow((x), (y))
-#define POWINT(x, y)	R_pow_di((x), (y))
-
 /* Critical point */
 #define IAPWS_TC	647.096		/* K     */
 #define IAPWS_RHOC	322.0		/* kg/m3 */
 #define IAPWS_PC	22.064		/* MPa   */
+
+/* Triple point */
+#define IAPWS_TT	273.16		/* K     */
+#define IAPWS_PT	611.657e-6	/* MPa   */
+
+#define IAPWS_P0	0.101325	/* MPa   */
 
 typedef enum {
 	IAPWS_UNDEF = -1,
@@ -64,6 +65,6 @@ double iapws_cp(const iapws_phi *phi);
 double iapws_w(const iapws_phi *phi);
 double iapws_alpha(const iapws_phi *phi);
 double iapws_beta(const iapws_phi *phi);
-double iapws_chit(const iapws_phi *phi);
+double iapws_kappat(const iapws_phi *phi);
 
 #endif

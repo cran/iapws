@@ -24,6 +24,7 @@
 #	include <alloca.h>
 #endif
 
+#include <assert.h>
 #include <math.h>
 
 #include <R_ext/Print.h>
@@ -32,61 +33,68 @@
 
 #include "nroot.h"
 
-int nroot_verbose = 0;
-int nroot_maxiter = 100;
-double nroot_tolf = 1e-9;
-double nroot_tolx = 1e-9;
+nroot_control nroot_default = {
+	.trace = 0,
+	.maxit = 100,
+	.abstol = 1e-9,
+	.reltol = 1e-9
+};
 
-void nroot_log(int iter, double errf, double errx)
+void nroot_log(const nroot_control *ctrl)
 {
-	REprintf("nroot: iter=%d epsf=%.8e epsx=%.8e\n",
-			iter, errf, errx);
+	if (ctrl->trace > 0)
+		REprintf("nroot: iter=%d epsf=%.8e epsx=%.8e\n",
+			ctrl->maxit, ctrl->abstol, ctrl->reltol);
 }
 
-int nroot1(root_fun fun, double *x, void *prms,
-		double *tolf, double *tolx, int *maxiter, int trace)
+int nroot1(root_fun fun, double *x, void *prms, nroot_control *ctrl)
 {
-	const double epsf = *tolf, epsx = *tolx;
+	assert(ctrl != &nroot_default);
+	const double tolf = ctrl->abstol;
+	const double tolx = ctrl->reltol;
 	double fx, dfx, dx;
-	while ((*maxiter)--) {
+	while (ctrl->maxit--) {
 		fun(x, prms, &fx, &dfx);
-		*tolf = fabs(fx);
-		if (*tolf <= epsf) return 0;
+		ctrl->abstol = fabs(fx);
+		if (ctrl->abstol <= tolf) return 0;
 
 		if (dfx == 0.0) return -2;
 
 		dx = -fx / dfx;
-		*tolx = fabs(dx) / fabs(*x);
-		if (*tolx <= epsx) return 0;
+		ctrl->reltol = fabs(dx) / fabs(*x);
+		if (ctrl->reltol <= tolx) return 0;
 
-		if (trace) nroot_log(*maxiter, *tolf, *tolx);
+		nroot_log(ctrl);
 
 		*x += dx;
 	}
 	return -1;
 }
 
-int nroot2(root_fun fun, double *x, void *prms,
-		double *tolf, double *tolx, int *maxiter, int trace)
+int nroot2(root_fun fun, double *x, void *prms, nroot_control *ctrl)
 {
-	const double epsf = *tolf, epsx = *tolx;
+	assert(ctrl != &nroot_default);
+	const double tolf = ctrl->abstol;
+	const double tolx = ctrl->reltol;
 	double fx[2], dfx[4], dx[2];
 	double det;
 
-	while ((*maxiter)--) {
+	while (ctrl->maxit--) {
 		fun(x, prms, fx, dfx);
-		*tolf = fabs(fx[0]) + fabs(fx[1]);
-		if (*tolf <= epsf) return 0;
+		ctrl->abstol = fabs(fx[0]) + fabs(fx[1]);
+		if (ctrl->abstol <= tolf) return 0;
 
 		det = dfx[0] * dfx[3] - dfx[2] * dfx[1];
 		if (det == 0.0) return -2;
 
-		dx[0] = -(dfx[3] * fx[0] - dfx[2] * fx[1]) / det;
-		dx[1] = +(dfx[1] * fx[0] - dfx[0] * fx[1]) / det;
-		*tolx = (fabs(dx[0]) + fabs(dx[1]))/(fabs(x[0]) + fabs(x[1]));
-		if (*tolx <= epsx) return 0;
+		det = 1.0 / det;
+		dx[0] = -(dfx[3] * fx[0] - dfx[2] * fx[1]) * det;
+		dx[1] = +(dfx[1] * fx[0] - dfx[0] * fx[1]) * det;
+		ctrl->reltol = (fabs(dx[0]) + fabs(dx[1])) /
+			(fabs(x[0]) + fabs(x[1]));
+		if (ctrl->reltol <= tolx) return 0;
 
-		if (trace) nroot_log(*maxiter, *tolf, *tolx);
+		nroot_log(ctrl);
 
 		x[0] += dx[0];
 		x[1] += dx[1];
@@ -94,10 +102,11 @@ int nroot2(root_fun fun, double *x, void *prms,
 	return -1;
 }
 
-int nrootn(int n, root_fun fun, double *x, void *prms,
-		double *tolf, double *tolx, int *maxiter, int trace)
+int nrootn(int n, root_fun fun, double *x, void *prms, nroot_control *ctrl)
 {
-	const double epsf = *tolf, epsx = *tolx;
+	assert(ctrl != &nroot_default);
+	const double tolf = ctrl->abstol;
+	const double tolx = ctrl->reltol;
 	double *fx, *dfx;
 
 	/* Blas & Lapack */
@@ -111,20 +120,20 @@ int nrootn(int n, root_fun fun, double *x, void *prms,
 	dfx = alloca(sizeof(dfx) * n * n);
 	ipiv = alloca(sizeof(ipiv) * n);
 
-	while ((*maxiter)--) {
+	while (ctrl->maxit--) {
 		fun(x, prms, fx, dfx);
-		*tolf = F77_NAME(dasum)(&n, fx, &i1);
-		if (*tolf <= epsf) return 0;
+		ctrl->abstol = F77_NAME(dasum)(&n, fx, &i1);
+		if (ctrl->abstol <= tolf) return 0;
 
 		F77_NAME(dscal)(&n, &dm1, fx, &i1);
 		F77_NAME(dgesv)(&n, &i1, dfx, &n, ipiv, fx, &n, &info);
 		if (info != 0) return -2;
 
-		*tolx = F77_NAME(dasum)(&n, fx, &i1) /
+		ctrl->reltol = F77_NAME(dasum)(&n, fx, &i1) /
 			F77_NAME(dasum)(&n, x, &i1);
-		if (*tolx <= epsx) return 0;
+		if (ctrl->reltol <= tolx) return 0;
 
-		if (trace) nroot_log(*maxiter, *tolf, *tolx);
+		nroot_log(ctrl);
 
 		F77_NAME(daxpy)(&n, &d1, fx, &i1, x, &i1);
 	}
@@ -132,31 +141,32 @@ int nrootn(int n, root_fun fun, double *x, void *prms,
 	return -1;
 }
 
-int sroot(root_fun fun, double *x, void *prms,
-		double *tolf, double *tolx, int *maxiter, int trace)
+int sroot(root_fun fun, double *x, void *prms, nroot_control *ctrl)
 {
-	const double epsf = *tolf, epsx = *tolx;
+	assert(ctrl != &nroot_default);
+	const double tolf = ctrl->abstol;
+	const double tolx = ctrl->reltol;
 	double fx, dfx, dx, fx0;
 
 	fun(x, prms, &fx0, &dfx);
-	*tolf = fabs(fx0);
-	if (*tolf <= epsf) return 0;
-	dx = epsx;
+	ctrl->abstol = fabs(fx0);
+	if (ctrl->abstol <= tolf) return 0;
+	dx = tolx;
 	*x += dx;
 
-	while ((*maxiter)--) {
+	while (ctrl->maxit--) {
 		fun(x, prms, &fx, &dfx);
-		*tolf = fabs(fx);
-		if (*tolf <= epsf) return 0;
+		ctrl->abstol = fabs(fx);
+		if (ctrl->abstol <= tolf) return 0;
 
 		dfx = fx - fx0;
 		if (dfx == 0.0) return -2;
 
 		dx *= -fx / dfx;
-		*tolx = fabs(dx) / fabs(*x);
-		if (*tolx <= epsx) return 0;
+		ctrl->reltol = fabs(dx) / fabs(*x);
+		if (ctrl->reltol <= tolx) return 0;
 
-		if (trace) nroot_log(*maxiter, *tolf, *tolx);
+		nroot_log(ctrl);
 
 		*x += dx;
 		fx0 = fx;

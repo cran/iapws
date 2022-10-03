@@ -25,57 +25,56 @@
 
 #include "iapws.h"
 #include "iapws95.h"
+#include "pow.h"
 #include "visc.h"
-
-enum {
-	SIZE0 = 5,
-	SIZE1 = 5,
-	SIZE2 = 6,
-};
-
-static const double coef0[SIZE0] = {
-	 2.443221e-3,
-	 1.323095e-2,
-	 6.770357e-3,
-	-3.454586e-3,
-	 4.096266e-4,
-};
-
-static const double coef1[SIZE1][SIZE2] = {
-	{  1.60397357,	-0.646013523,	 0.111443906,
-	   0.102997357,	-0.0504123634,	 0.00609859258	},
-	{  2.33771842,	-2.78843778,	 1.53616167,
-	  -0.463045512,	 0.0832827019,	-0.00719201245	},
-	{  2.19650529,	-4.54580785,	 3.55777244,
-	  -1.40944978,	 0.275418278,	-0.0205938816	},
-	{ -1.21051378,	 1.60812989,	-0.621178141,
-	   0.0716373224, 0.0,		 0.0		},
-	{ -2.7203370,	 4.57586331,	-3.18369245,
-	   1.1168348,	-0.19268305,	 0.012913842	},
-};
 
 static double lambda01(double rho, double t)	/* mW/K/m */
 {
+	enum {
+		SIZE0 = 5,
+		SIZE1 = 5,
+		SIZE2 = 6,
+	};
+	const double coef0[SIZE0] = {
+		2.443221e-3,
+		1.323095e-2,
+		6.770357e-3,
+		-3.454586e-3,
+		4.096266e-4,
+	};
+	const double coef1[SIZE1][SIZE2] = {
+		{  1.60397357,	-0.646013523,	 0.111443906,
+		   0.102997357,	-0.0504123634,	 0.00609859258	},
+		{  2.33771842,	-2.78843778,	 1.53616167,
+		  -0.463045512,	 0.0832827019,	-0.00719201245	},
+		{  2.19650529,	-4.54580785,	 3.55777244,
+		  -1.40944978,	 0.275418278,	-0.0205938816	},
+		{ -1.21051378,	 1.60812989,	-0.621178141,
+		   0.0716373224, 0.0,		 0.0		},
+		{ -2.7203370,	 4.57586331,	-3.18369245,
+		   1.1168348,	-0.19268305,	 0.012913842	},
+	};
 
 	const double tau = IAPWS_TC / t;
 	const double delta = rho / IAPWS_RHOC;
 	double lambda0 = 0.0;
 	double lambda1 = 0.0;
 	int i, j;
+	double ti, dj;
 
-	for (i = 0; i < SIZE0; ++i) {
-		lambda0 += coef0[i] * POWINT(tau, i);
+	for (i = 0, ti = 1.0; i < SIZE0; ++i, ti *= tau) {
+		lambda0 += coef0[i] * ti;
 	}
-	for (i = 0; i < SIZE1; ++i) {
-		double tm1i = POWINT(tau - 1.0, i);
-		for (j = 0; j < SIZE2; ++j) {
-			lambda1 += coef1[i][j] * tm1i * POWINT(delta - 1.0, j);
+	for (i = 0, ti = 1.0; i < SIZE1; ++i, ti *= tau - 1.0) {
+		for (j = 0, dj = 1.0; j < SIZE2; ++j, dj *= delta - 1.0) {
+			lambda1 += coef1[i][j] * ti * dj;
 		}
 	}
 	return 1.0 / sqrt(tau) / lambda0 * exp(delta * lambda1);
 }
 
-static double lambda2(const iapws_phi *phi, double dchi, double eta)	/* mW/K/m */
+static double lambda2(double rho, double t, double cp, double cv,
+		double dchi, double eta)	/* mW/K/m */
 {
 	const double lam = 177.8514;
 	const double qd = 1.0 / 0.4;	/* 1/nm */
@@ -84,21 +83,17 @@ static double lambda2(const iapws_phi *phi, double dchi, double eta)	/* mW/K/m *
 	const double xi0 = 0.13;	/* nm */
 	const double gam0 = 0.06;
 
-	const double rho = iapws_rho(phi);
-	const double t = iapws_t(phi);
-	const double delta = rho / IAPWS_RHOC;
-
 	if (rho == 0.0 || dchi <= 0.0) return 0.0;
 
-	double y = qd * xi0 * POW(dchi / gam0, nu / gam);
+	const double y = qd * xi0 * POW(dchi / gam0, nu / gam);
 	if (y < 1.2e-7) return 0.0;
 
-	double cp = iapws_cp(phi);
-	double invk = iapws_cv(phi) / cp;
-	double z = ((1.0 - invk) * atan(y) + invk * y +
-			expm1(-y / (1.0 + y*y*y / (POW2(delta) * 3.0)))) *
-		2.0 * M_1_PI / y;
-	return lam * delta * t * z * cp / (eta * IAPWS95_R * IAPWS_TC);
+	const double delta = rho / IAPWS_RHOC;
+	const double invk = cv / cp;
+	return lam * delta * t * cp * 2.0 * M_1_PI *
+		((1.0 - invk) * atan(y) + invk * y +
+		 expm1(-y / (1.0 + y*y*y / (POW2(delta) * 3.0)))) /
+		(y * eta * IAPWS95_R * IAPWS_TC);
 }
 
 double if97_lambda(const iapws_phi *gamma)	/* mW/K/m */
@@ -122,18 +117,22 @@ double if97_lambda(const iapws_phi *gamma)	/* mW/K/m */
 		  -0.965458722086812, -0.503243546373828 },
 	};
 	int i, j;
-	double rhob = rho / IAPWS_RHOC;
+	const double rhob = rho / IAPWS_RHOC;
 	double invzr = 0.0;
+	double ri;
 	if (rhob <= 0.310559006) j = 0;
 	else if (rhob <= 0.776397516) j = 1;
 	else if (rhob <= 1.242236025) j = 2;
 	else if (rhob <= 1.863354037) j = 3;
 	else j = 4;
-	for (i = 0; i < 6; ++i) invzr += A[i][j] * POWINT(rhob, i);
+	for (i = 0, ri = 1.0; i < 6; ++i, ri *= rhob) {
+		invzr += A[i][j] * ri;
+	}
 
-	double dchi = (iapws_chit(gamma) * IAPWS_PC * rhob -
+	double dchi = (iapws_kappat(gamma) * IAPWS_PC * rhob -
 			tr / (t * invzr)) * rhob;
-	return lambda01(rho, t) + lambda2(gamma, dchi, if97_eta(gamma));
+	return lambda01(rho, t) + lambda2(rho, t, iapws_cp(gamma),
+			iapws_cv(gamma), dchi, if97_eta(gamma));
 }
 
 double iapws95_lambda(const iapws_phi *phi)	/* mW/K/m */
@@ -143,8 +142,9 @@ double iapws95_lambda(const iapws_phi *phi)	/* mW/K/m */
 	const double tr = 1.5 * IAPWS_TC;
 	iapws_phi phir;
 	iapws95_phi(rho, tr, &phir);
-	double dchi = (iapws_chit(phi) - iapws_chit(&phir) * tr / t) *
+	double dchi = (iapws_kappat(phi) - iapws_kappat(&phir) * tr / t) *
 		IAPWS_PC * POW2(rho / IAPWS_RHOC);
-	return lambda01(rho, t) + lambda2(phi, dchi, iapws95_eta(phi));
+	return lambda01(rho, t) + lambda2(rho, t, iapws_cp(phi),
+			iapws_cv(phi), dchi, iapws95_eta(phi));
 }
 

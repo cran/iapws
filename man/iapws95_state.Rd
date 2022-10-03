@@ -1,6 +1,5 @@
 \name{iapws95_state}
 \alias{iapws95_state}
-\alias{iapws95_state_rhot}
 \title{
   IAPWS-95 Physical States
 }
@@ -8,13 +7,16 @@
   Compute the physical state of water according the IAPWS formulation 1995.
 }
 \usage{
-iapws95_state(p, t)
-iapws95_state_rhot(rho, t)
+iapws95_state(p, t, rho)
 }
 \arguments{
-  \item{rho}{a numeric vector giving the values of density in kg/m^3.}
   \item{p}{a numeric vector giving the pressure values in MPa.}
   \item{t}{a numeric vector giving the temperature values in K.}
+  \item{rho}{a numeric vector giving the values of density in kg/m^3.}
+}
+\details{
+  A valid pair of \code{p}, \code{rho}, \code{t} is needed:
+  either \code{(p, t)} or \code{(rho, t)}.
 }
 \value{
   A character vector giving the physical state.
@@ -25,6 +27,7 @@ iapws95_state_rhot(rho, t)
   Jonathan Debove
 }
 \examples{
-iapws95_state(c(.1, .1, 23), c(293.15, 373.15, 650))
-iapws95_state_rhot(c(1000, .1, 500, 500), c(293.15, 373.15, 650, 373.15))
+iapws95_state(p = c(.1, .1, 23), t = c(293.15, 373.15, 650))
+iapws95_state(rho = c(1000, .1, 500, 500),
+              t = c(293.15, 373.15, 650, 373.15))
 }

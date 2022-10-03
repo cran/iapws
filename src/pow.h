@@ -16,11 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef IAPWS_SAT_H
-#define IAPWS_SAT_H
+#ifndef POW_H
+#define POW_H
 
-double sat_p(double t);
-double sat_rhol(double t);
-double sat_rhog(double t);
+#include <Rmath.h>
+#define POW2(x)		((x) * (x))
+#define POW(x, y)	R_pow((x), (y))
+#define POWINT(x, y)	R_pow_di((x), (y))
+
+inline double powint(double x, int i)
+{
+	switch (i) {
+		case 0: return 1.0;
+		case 1: return x;
+		case 2: return x*x;
+		case 3: return x*x*x;
+		default: return POWINT(x, i);
+	}
+}
 
 #endif

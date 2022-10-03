@@ -23,5 +23,5 @@ if97_state(p, t)
   Jonathan Debove
 }
 \examples{
-if97_state(c(.1, .1, 23), c(293.15, 373.15, 650))
+if97_state(p = c(.1, .1, 23), t = c(293.15, 373.15, 650))
 }

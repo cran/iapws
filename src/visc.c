@@ -25,49 +25,48 @@
 
 #include "iapws.h"
 #include "iapws95.h"
-
-enum {
-	SIZE0 = 4,
-	SIZE1 = 21,
-};
-
-static const double coef0[SIZE0] = {
-	 1.67752,
-	 2.20462,
-	 0.6366564,
-	-0.241605,
-};
-
-static const struct {
-	int i;
-	int j;
-	double H;
-} coef1[SIZE1] = {
-	{ 0, 0,  5.20094e-1 },
-	{ 1, 0,  8.50895e-2 },
-	{ 2, 0, -1.08374    },
-	{ 3, 0, -2.89555e-1 },
-	{ 0, 1,  2.22531e-1 },
-	{ 1, 1,  9.99115e-1 },
-	{ 2, 1,  1.88797    },
-	{ 3, 1,  1.26613    },
-	{ 5, 1,  1.20573e-1 },
-	{ 0, 2, -2.81378e-1 },
-	{ 1, 2, -9.06851e-1 },
-	{ 2, 2, -7.72479e-1 },
-	{ 3, 2, -4.89837e-1 },
-	{ 4, 2, -2.57040e-1 },
-	{ 0, 3,  1.61913e-1 },
-	{ 1, 3,  2.57399e-1 },
-	{ 0, 4, -3.25372e-2 },
-	{ 3, 4,  6.98452e-2 },
-	{ 4, 5,  8.72102e-3 },
-	{ 3, 6, -4.35673e-3 },
-	{ 5, 6, -5.93264e-4 },
-};
+#include "pow.h"
 
 static double eta01(double rho, double t)
 {
+	enum {
+		SIZE0 = 4,
+		SIZE1 = 21,
+	};
+	const double coef0[SIZE0] = {
+		1.67752,
+		2.20462,
+		0.6366564,
+		-0.241605,
+	};
+	const struct {
+		int i;
+		int j;
+		double H;
+	} coef1[SIZE1] = {
+		{ 0, 0,  5.20094e-1 },
+		{ 1, 0,  8.50895e-2 },
+		{ 2, 0, -1.08374    },
+		{ 3, 0, -2.89555e-1 },
+		{ 0, 1,  2.22531e-1 },
+		{ 1, 1,  9.99115e-1 },
+		{ 2, 1,  1.88797    },
+		{ 3, 1,  1.26613    },
+		{ 5, 1,  1.20573e-1 },
+		{ 0, 2, -2.81378e-1 },
+		{ 1, 2, -9.06851e-1 },
+		{ 2, 2, -7.72479e-1 },
+		{ 3, 2, -4.89837e-1 },
+		{ 4, 2, -2.57040e-1 },
+		{ 0, 3,  1.61913e-1 },
+		{ 1, 3,  2.57399e-1 },
+		{ 0, 4, -3.25372e-2 },
+		{ 3, 4,  6.98452e-2 },
+		{ 4, 5,  8.72102e-3 },
+		{ 3, 6, -4.35673e-3 },
+		{ 5, 6, -5.93264e-4 },
+	};
+
 	const double tau = IAPWS_TC / t;
 	const double delta = rho / IAPWS_RHOC;
 	double eta0 = 0.0;
@@ -75,11 +74,12 @@ static double eta01(double rho, double t)
 	int i;
 
 	for (i = 0; i < SIZE0; ++i) {
-		eta0 += coef0[i] * POWINT(tau, i);
+		eta0 += coef0[i] * powint(tau, i);
 	}
 	for (i = 0; i < SIZE1; ++i) {
-		eta1 += coef1[i].H * POWINT(tau - 1.0, coef1[i].i) *
-			POWINT(delta - 1.0, coef1[i].j);
+		eta1 += coef1[i].H *
+			powint(tau - 1.0, coef1[i].i) *
+			powint(delta - 1.0, coef1[i].j);
 	}
 	return 100.0 / sqrt(tau) / eta0 * exp(delta * eta1);
 }
@@ -106,7 +106,7 @@ double iapws95_eta(const iapws_phi *phi)  /* µPa.s */
 
 	iapws_phi phir;
 	iapws95_phi(rho, tr, &phir);
-	double dchi = (iapws_chit(phi) - iapws_chit(&phir) * tr / t) *
+	double dchi = (iapws_kappat(phi) - iapws_kappat(&phir) * tr / t) *
 		IAPWS_PC * POW2(rho / IAPWS_RHOC);
 
 	if (dchi > 0.0) {
@@ -138,3 +138,4 @@ double iapws95_eta(const iapws_phi *phi)  /* µPa.s */
 
 	return eta;
 }
+

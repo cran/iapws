@@ -16,23 +16,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef IAPWS_NROOT_H
-#define IAPWS_NROOT_H
+#ifndef IAPWS_MELT08_H
+#define IAPWS_MELT08_H
 
-typedef struct {
-	int trace;
-	int maxit;
-	double abstol;
-	double reltol;
-} nroot_control;
-extern nroot_control nroot_default;
+#include "iapws.h"
 
-typedef void root_fun(double *x, void *prms, double *fx, double *dfx);
+typedef enum {
+	ICE_IH  = 1,
+	ICE_III = 3,
+	ICE_V   = 5,
+	ICE_VI  = 6,
+	ICE_VII = 7,
+} ice_phase_id;
 
-int nroot1(root_fun fun, double *x, void *prms, nroot_control *ctrl);
-int nroot2(root_fun fun, double *x, void *prms, nroot_control *ctrl);
-int nrootn(int n, root_fun fun, double *x, void *prms, nroot_control *ctrl);
-
-int sroot(root_fun fun, double *x, void *prms, nroot_control *ctrl);
+double melt_p(double t, ice_phase_id phase);
+double sub_p(double t);
+iapws_state_id melt_sub_state(double p, double t);
 
 #endif
