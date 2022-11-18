@@ -1,13 +1,14 @@
-\name{iapws95_state}
-\alias{iapws95_state}
+\name{heavy17_state}
+\alias{heavy17_state}
 \title{
-  IAPWS-95 Physical States
+  IAPWS-17 Physical States
 }
 \description{
-  Identify the physical state of water according to the IAPWS formulation 1995.
+  Identify the physical state of heavy water according to the IAPWS formulation
+  2017.
 }
 \usage{
-iapws95_state(p, t, rho)
+heavy17_state(p, t, rho)
 }
 \arguments{
   \item{p}{a numeric vector giving the pressure values in MPa.}
@@ -27,7 +28,7 @@ iapws95_state(p, t, rho)
   Jonathan Debove
 }
 \examples{
-iapws95_state(p = c(.1, .1, 23), t = c(293.15, 373.15, 650))
-iapws95_state(rho = c(1000, .1, 500, 500),
+heavy17_state(p = c(.1, .1, 23), t = c(293.15, 393.15, 650))
+heavy17_state(rho = c(1200, .1, 500, 500),
               t = c(293.15, 373.15, 650, 373.15))
 }

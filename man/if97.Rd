@@ -49,10 +49,10 @@ if97(what, p, t, h, state = NULL)
     \item \code{"beta"}: the pressure coefficient in MPa/K.
     \item \code{"kappat"}: the isothermal compressibility in 1/MPa.
     \item \code{"w"}: the speed of sound in m/s.
-    \item \code{"eta"}: the dynamic viscosity in \eqn{10^{-6}}Pa.s.
+    \item \code{"eta"}: the dynamic viscosity in \eqn{\mu}Pa.s.
     \item \code{"lambda"}: the thermal conductivity in mW/K/m.
-    \item \code{"sigma"}: the surface tension in mN/m.
-    \item \code{"epsilon"}: the dielectric constant.
+    %\item \code{"sigma"}: the surface tension in mN/m.
+    %\item \code{"epsilon"}: the dielectric constant.
   }
 
   A valid pair of \code{p}, \code{t} and \code{h} is needed:

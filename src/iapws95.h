@@ -24,13 +24,13 @@
 #define IAPWS95_R	0.46151805	/* kJ/kg/K */
 #define IAPWS95_PT	611.654771e-06	/* MPa */
 
-void iapws95_phi(double rho, double t, iapws_phi *phi);
-int iapws95_phi_rhot(double rho, double t, iapws_state_id state, iapws_phi *phi);
-int iapws95_phi_pt(double p, double t, iapws_state_id state, iapws_phi *phi);
-int iapws95_phi_ph(double p, double h, iapws_phi *phi);
-int iapws95_sat_t(double t, iapws_phi *phil, iapws_phi *phig);
-int iapws95_sat_p(double p, iapws_phi *phil, iapws_phi *phig);
-iapws_state_id iapws95_state_pt(double p, double t);
-iapws_state_id iapws95_state_rhot(double rho, double t);
+void iapws95_phi(double rho, double t, struct iapws_phi *phi);
+int iapws95_phi_rhot(double rho, double t, enum iapws_state state, struct iapws_phi *phi);
+int iapws95_phi_pt(double p, double t, enum iapws_state state, struct iapws_phi *phi);
+int iapws95_phi_ph(double p, double h, struct iapws_phi *phi);
+int iapws95_sat_t(double t, struct iapws_phi *phil, struct iapws_phi *phig);
+int iapws95_sat_p(double p, struct iapws_phi *phil, struct iapws_phi *phig);
+enum iapws_state iapws95_state_pt(double p, double t);
+enum iapws_state iapws95_state_rhot(double rho, double t);
 
 #endif

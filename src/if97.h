@@ -25,21 +25,22 @@
 #define IF97_R		0.461526	/* kJ/kg/K */
 #define IF97_PT		611.657e-06	/* MPa */
 
-typedef enum {
+enum if97_region {
 	IF97_REGION_UNDEF = 0,
 	IF97_REGION_1 = 1,
 	IF97_REGION_2 = 2,
 	IF97_REGION_3 = 3,
 	IF97_REGION_4 = 4,
 	IF97_REGION_5 = 5,
-} if97_region_id;
+};
 
-iapws_state_id if97_state_pt(double p, double t);
-if97_region_id if97_region_pt(double p, double t);
-if97_region_id if97_region_ph(double p, double h);
+enum iapws_state if97_state_pt(double p, double t);
+enum if97_region if97_region_pt(double p, double t);
+enum if97_region if97_region_ph(double p, double h);
 double if97_tsat(double p);
 double if97_psat(double t);
-int if97_gamma_pt(double p, double t, iapws_state_id state, iapws_phi *gamma);
-int if97_gamma_ph(double p, double h, iapws_phi *gamma);
+int if97_gamma_pt(double p, double t, enum iapws_state state,
+		struct iapws_phi *gamma);
+int if97_gamma_ph(double p, double h, struct iapws_phi *gamma);
 
 #endif

@@ -62,4 +62,9 @@ ice06(what, p, t)
 tab <- ice06(c("g", "h", "f", "u", "s", "cp", "rho", "alpha", "beta", "kappat"),
               p = c(611.657e-6, .101325, 100), t = c(273.16, 273.152519, 100))
 format(tab, scientific = TRUE, digits = 11)
+\dontshow{
+stopifnot(all.equal(tab[, "f", drop = FALSE],
+          matrix(c(-0.55446875e-4, -0.918701567e-2, -0.328489902347e3),
+                 3, 1, dimnames = list(NULL, c("f"))), tolerance = 1e-8))
+}
 }

@@ -19,6 +19,7 @@
 #ifndef IAPWS_SURF_H
 #define IAPWS_SURF_H
 
-double iapws_sigma(const iapws_phi *phi);
+double iapws_sigma(double t);
+double heavy17_sigma(double t);
 
 #endif

@@ -16,21 +16,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* International Association for the Properties of Water and Steam,
+/*
+ * International Association for the Properties of Water and Steam,
  * IAPWS R1-76(2014), Revised Release on Surface Tension of Ordinary Water
  * Substance (2014)
+ *
+ * International Association for the Properties of Water and Steam,
+ * IAPWS R5-85(1994), IAPWS Release on Surface Tension of Heavy Water
+ * Substance (1994)
  */
 
 #include "iapws.h"
+#include "heavy17.h"
 #include "pow.h"
 
-static double surf(double t)
+static double surf(double theta, const double B, const double b, const double mu)
 {
-	t  = 1.0 - t / IAPWS_TC;
-	return POW(t, 1.256) * (1.0 - t * 0.625) * 235.8;
+	theta = 1.0 - theta;
+	return theta >= 0.0 ? POW(theta, mu) * (1.0 + theta * b) * B : 0.0;
 }
 
-double iapws_sigma(const iapws_phi *phi)  /* mN/m */
+double iapws_sigma(double t)  /* mN/m */
 {
-	return surf(iapws_t(phi));
+	return surf(t / IAPWS_TC, 235.8, -0.625, 1.256);
 }
+
+double heavy17_sigma(double t)  /* mN/m */
+{
+	return surf(t / HEAVY17_TC, 238.0, -0.639, 1.25);
+}
+

@@ -16,9 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef IAPWS_DIELEC_H
-#define IAPWS_DIELEC_H
+#ifndef IAPWS_MELT_H
+#define IAPWS_MELT_H
 
-double iapws_epsilon(const iapws_phi *phi);
+#include "iapws.h"
+
+double melt_p(double t, enum iapws_ice phase);
+double sub_p(double t);
+enum iapws_state melt_sub_state(double p, double t);
 
 #endif

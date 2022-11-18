@@ -19,20 +19,31 @@
 #ifndef IAPWS_NROOT_H
 #define IAPWS_NROOT_H
 
-typedef struct {
+enum nroot_exit {
+	NROOT_MAXITER = -3,
+	NROOT_ZERODET = -2,
+	NROOT_FAILURE = -1,
+	NROOT_SUCCESS =  0,
+};
+
+struct nroot_control {
 	int trace;
 	int maxit;
 	double abstol;
 	double reltol;
-} nroot_control;
-extern nroot_control nroot_default;
+};
+extern struct nroot_control nroot_default;
 
-typedef void root_fun(double *x, void *prms, double *fx, double *dfx);
+typedef void nroot_fun(double *x, void *prms, double *fx, double *dfx);
 
-int nroot1(root_fun fun, double *x, void *prms, nroot_control *ctrl);
-int nroot2(root_fun fun, double *x, void *prms, nroot_control *ctrl);
-int nrootn(int n, root_fun fun, double *x, void *prms, nroot_control *ctrl);
+enum nroot_exit nroot1(nroot_fun fun, double *x, void *prms,
+		struct nroot_control *ctrl);
+enum nroot_exit nroot2(nroot_fun fun, double *x, void *prms,
+		struct nroot_control *ctrl);
+enum nroot_exit nrootn(int n, nroot_fun fun, double *x, void *prms,
+		struct nroot_control *ctrl);
 
-int sroot(root_fun fun, double *x, void *prms, nroot_control *ctrl);
+enum nroot_exit sroot(nroot_fun fun, double *x, void *prms,
+		struct nroot_control *ctrl);
 
 #endif

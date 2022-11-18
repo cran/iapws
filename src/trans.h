@@ -16,10 +16,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef IAPWS_VISC_H
-#define IAPWS_VISC_H
+#ifndef IAPWS_TRANS_H
+#define IAPWS_TRANS_H
 
-double if97_eta(const iapws_phi *phi);
-double iapws95_eta(const iapws_phi *phi);
+double if97_eta(const struct iapws_phi *phi);
+double iapws95_eta(const struct iapws_phi *phi);
+double heavy17_eta(const struct iapws_phi *phi);
+
+double if97_lambda(const struct iapws_phi *gamma);
+double iapws95_lambda(const struct iapws_phi *phi);
+double heavy17_lambda(const struct iapws_phi *phi);
 
 #endif

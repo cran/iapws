@@ -19,6 +19,6 @@
 #ifndef IAPWS_ICE06_H
 #define IAPWS_ICE06_H
 
-void ice06_gamma(double p, double t, iapws_phi *gamma);
+void ice06_gamma(double p, double t, struct iapws_phi *gamma);
 
 #endif /* IAPWS_ICE06_H */

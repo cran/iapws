@@ -16,22 +16,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* International Association for the Properties of Water and Steam,
+/*
+ * International Association for the Properties of Water and Steam,
  * IAPWS R10-06(2009), Revised Release on the Equation of State 2006
  * for H2O Ice Ih (2009)
  */
 
 #include <complex.h>
 #include "iapws.h"
+#include "pow.h"  /* for ARRAY_SIZE */
 
-void ice06_gamma(double p, double t, iapws_phi *gamma)
+void ice06_gamma(double p, double t, struct iapws_phi *gamma)
 {
-	enum {
-		SIZE0 = 5,
-		SIZE1 = 2,
-		SIZE2 = 3,
-	};
-	const double coef0[SIZE0] = {
+	const double coef0[5] = {
 		-0.632020233335886e6	/ IAPWS_TT,
 		 0.655022213658955	/ IAPWS_TT,
 		-0.189369929326131e-7	/ IAPWS_TT,
@@ -40,19 +37,19 @@ void ice06_gamma(double p, double t, iapws_phi *gamma)
 	};
 	const double s0 = -0.332733756492168e4;	/* IAPWS-95 */
 	//const double s0 = 0.18913e3;		/* absolute */
-	const double complex coeft[SIZE1] = {
+	const double complex coeft[2] = {
 		0.368017112855051e-1 + I * 0.510878114959572e-1,
 		0.337315741065416    + I * 0.335449415919309,
 	};
 	const double complex r1 = 0.447050716285388e2 + I * 0.656876847463481e2;
-	const double complex coefr[SIZE2] = {
+	const double complex coefr[3] = {
 		-0.725974574329220e2   - I * 0.781008427112870e2,
 		-0.557107698030123e-4  + I * 0.464578634580806e-4,
 		 0.234801409215913e-10 - I * 0.285651142904972e-10,
 	};
 
 	const double pi = p / IAPWS_PT;
-	const double p0 = IAPWS_P0 / IAPWS_PT;
+	const double p0 = IAPWS_PN / IAPWS_PT;
 	const double tau = IAPWS_TT / t;
 	const double theta = 1.0 / tau;
 
@@ -63,7 +60,7 @@ void ice06_gamma(double p, double t, iapws_phi *gamma)
 		{ clog(coeft[1]), clog(coeft[1]-theta), clog(coeft[1]+theta) },
 	};
 	double complex xt[2];
-	iapws_phi gamma_r;
+	struct iapws_phi gamma_r;
 	int i;
 
 	/* gamma = g/RT */
@@ -80,11 +77,11 @@ void ice06_gamma(double p, double t, iapws_phi *gamma)
 	gamma->d02 = 0.0;
 
 	/* g0/RT */
-	for (i = 0, pik = 1.0; i < SIZE0; ++i, pik *= pi - p0) {
+	for (i = 0, pik = 1.0; i < ARRAY_SIZE(coef0); ++i, pik *= pi - p0) {
 		gamma->d00 += coef0[i] * pik;
-		if (i < SIZE0 - 1)
+		if (i < ARRAY_SIZE(coef0) - 1)
 			gamma->d10 += coef0[i + 1] * (i + 1) * pik;
-		if (i < SIZE0 - 2)
+		if (i < ARRAY_SIZE(coef0) - 2)
 			gamma->d20 += coef0[i + 2] * (i + 2) * (i + 1) * pik;
 	}
 	gamma->d00 *= tau;
@@ -97,11 +94,11 @@ void ice06_gamma(double p, double t, iapws_phi *gamma)
 	gamma->d00 -= s0;
 
 	/* r2 */
-	for (i = 0, pik = 1.0; i < SIZE2; ++i, pik *= pi - p0) {
+	for (i = 0, pik = 1.0; i < ARRAY_SIZE(coefr); ++i, pik *= pi - p0) {
 		r2[0] += coefr[i] * pik;
-		if (i < SIZE2 - 1)
+		if (i < ARRAY_SIZE(coefr) - 1)
 			r2[1] += coefr[i + 1] * (i + 1) * pik;
-		if (i < SIZE2 - 2)
+		if (i < ARRAY_SIZE(coefr) - 2)
 			r2[2] += coefr[i + 2] * (i + 2) * (i + 1) * pik;
 	}
 	r2[1] *= pi;

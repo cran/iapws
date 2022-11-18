@@ -16,55 +16,77 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef IAPWS_H
-#define IAPWS_H
+#ifndef IAPWS_IAPWS_H
+#define IAPWS_IAPWS_H
+
+/*
+ * Constants
+ */
+
+/* Molar mass */
+#define IAPWS_M		18.015268	/* g/mol */
 
 /* Critical point */
 #define IAPWS_TC	647.096		/* K     */
-#define IAPWS_RHOC	322.0		/* kg/m3 */
 #define IAPWS_PC	22.064		/* MPa   */
+#define IAPWS_RHOC	322.0		/* kg/m3 */
 
 /* Triple point */
 #define IAPWS_TT	273.16		/* K     */
 #define IAPWS_PT	611.657e-6	/* MPa   */
 
-#define IAPWS_P0	0.101325	/* MPa   */
+/* Normal condition */
+#define IAPWS_PN	0.101325	/* MPa   */
 
-typedef enum {
+enum iapws_state {
 	IAPWS_UNDEF = -1,
 	IAPWS_SOLID,
 	IAPWS_LIQUID,
 	IAPWS_GAS,
 	IAPWS_CRIT,
 	IAPWS_SAT,
-} iapws_state_id;
+};
 
-typedef struct {
+enum iapws_ice {
+	ICE_IH  = 1,
+	ICE_III = 3,
+	ICE_V   = 5,
+	ICE_VI  = 6,
+	ICE_VII = 7,
+};
+
+struct iapws_phi {
 	enum { IAPWS_PHI, IAPWS_GAMMA } type;
-	double d00;
-	double d10;
-	double d01;
-	double d11;
-	double d20;
-	double d02;
+	double d00, d10, d01, d11, d20, d02;
 	double p, rho, t, h;
 	double R;
-} iapws_phi;
+};
 
-double iapws_rho(const iapws_phi *phi);
-double iapws_t(const iapws_phi *phi);
-double iapws_p(const iapws_phi *phi);
-double iapws_v(const iapws_phi *phi);
-double iapws_f(const iapws_phi *phi);
-double iapws_g(const iapws_phi *phi);
-double iapws_u(const iapws_phi *phi);
-double iapws_h(const iapws_phi *phi);
-double iapws_s(const iapws_phi *phi);
-double iapws_cv(const iapws_phi *phi);
-double iapws_cp(const iapws_phi *phi);
-double iapws_w(const iapws_phi *phi);
-double iapws_alpha(const iapws_phi *phi);
-double iapws_beta(const iapws_phi *phi);
-double iapws_kappat(const iapws_phi *phi);
+double iapws_rho(const struct iapws_phi *phi);
+double iapws_t(const struct iapws_phi *phi);
+double iapws_p(const struct iapws_phi *phi);
+double iapws_v(const struct iapws_phi *phi);
+double iapws_f(const struct iapws_phi *phi);
+double iapws_g(const struct iapws_phi *phi);
+double iapws_u(const struct iapws_phi *phi);
+double iapws_h(const struct iapws_phi *phi);
+double iapws_s(const struct iapws_phi *phi);
+double iapws_cv(const struct iapws_phi *phi);
+double iapws_cp(const struct iapws_phi *phi);
+double iapws_w(const struct iapws_phi *phi);
+double iapws_alpha(const struct iapws_phi *phi);
+double iapws_beta(const struct iapws_phi *phi);
+double iapws_kappat(const struct iapws_phi *phi);
+
+struct iapws_phi_call {
+	void (*iapws_phi)(double rho, double t, struct iapws_phi *phi);
+	struct iapws_phi *phi;
+};
+
+void get_phi_pt(double *x, void *xcall, double *fx, double *dfx);
+void get_phi_ph(double *x, void *xcall, double *fx, double *dfx);
+void get_sat_t(double *x, void *xcall, double *fx, double *dfx);
+void get_sat_p(double *x, void *xcall, double *fx, double *dfx);
+void get_gamma_ph(double *x, void *xcall, double *fx, double *dfx);
 
 #endif

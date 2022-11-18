@@ -16,7 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* International Association for the Properties of Water and Steam,
+/*
+ * International Association for the Properties of Water and Steam,
  * IAPWS R7-97(2012), Revised Release on the IAPWS Industrial Formulation 1997
  * for the Thermodynamic Properties of Water and Steam (2007)
  */
@@ -25,22 +26,23 @@
 #include <math.h>
 
 #include "if97.h"
-#include "melt08.h"
+#include "melt.h"
 #include "nroot.h"
+#include "coef.h"
 #include "pow.h"
 
 /* Static function forward declarations */
-static void gamma_r1(double p, double t, iapws_phi *gamma);
-static int gamma_r1_ph(double p, double h, iapws_phi *gamma);
+static void gamma_r1(double p, double t, struct iapws_phi *gamma);
+static int gamma_r1_ph(double p, double h, struct iapws_phi *gamma);
 static double t_r1_ph(double p, double h);
 
-static void gamma_r2(double p, double t, int meta, iapws_phi *gamma);
-static int gamma_r2_ph(double p, double h, iapws_phi *gamma);
+static void gamma_r2(double p, double t, int meta, struct iapws_phi *gamma);
+static int gamma_r2_ph(double p, double h, struct iapws_phi *gamma);
 static double t_r2_ph(double p, double h);
 
-static void phi_r3(double rho, double t, iapws_phi *phi);
-static int phi_r3_pt(double p, double t, iapws_phi *phi);
-static int phi_r3_ph(double p, double h, iapws_phi *phi);
+static void phi_r3(double rho, double t, struct iapws_phi *phi);
+static int phi_r3_pt(double p, double t, struct iapws_phi *phi);
+static int phi_r3_ph(double p, double h, struct iapws_phi *phi);
 static double v_r3_pt(double p, double t);
 static double t_r3_ph(double p, double h);
 static double v_r3_ph(double p, double h);
@@ -48,7 +50,7 @@ static double v_r3_ph(double p, double h);
 static double pi_r4(double theta);
 static double theta_r4(double pi);
 
-static void gamma_r5(double p, double t, iapws_phi *gamma);
+static void gamma_r5(double p, double t, struct iapws_phi *gamma);
 
 static double pi_b23(double theta);
 static double theta_b23(double pi);
@@ -57,15 +59,9 @@ static double p_b34_h(double h);
 static double pi_b2bc(double eta);
 static double eta_b3ab(double pi);
 
-typedef struct {
-	int I;
-	int J;
-	double n;
-} if97_coef;
-
 /* Exported functions */
 
-iapws_state_id if97_state_pt(double p, double t)
+enum iapws_state if97_state_pt(double p, double t)
 {
 	double ps;
 	if (t >= IAPWS_TT && t < IAPWS_TC && p < 620.0) {
@@ -80,7 +76,7 @@ iapws_state_id if97_state_pt(double p, double t)
 	return melt_sub_state(p, t);
 }
 
-if97_region_id if97_region_pt(double p, double t)
+enum if97_region if97_region_pt(double p, double t)
 {
 	double ps;
 	if (t >= 273.15 && t <= 623.15) {
@@ -109,10 +105,10 @@ if97_region_id if97_region_pt(double p, double t)
 	return IF97_REGION_UNDEF;
 }
 
-if97_region_id if97_region_ph(double p, double h)
+enum if97_region if97_region_ph(double p, double h)
 {
 	double ts;
-	iapws_phi gamma;
+	struct iapws_phi gamma;
 	gamma.R = IF97_R;
 
 	if (p <= pi_r4(273.15)) {
@@ -157,12 +153,13 @@ double if97_psat(double t)
 	return 0.0;
 }
 
-//#define PEPS	1.001
-#define PEPS	1.0001
+#define PEPS	1.001
+//#define PEPS	1.0001
 
-int if97_gamma_pt(double p, double t, iapws_state_id state, iapws_phi *gamma)
+int if97_gamma_pt(double p, double t, enum iapws_state state,
+		struct iapws_phi *gamma)
 {
-	if97_region_id reg = if97_region_pt(p, t);
+	enum if97_region reg = if97_region_pt(p, t);
 	int meta = 0;
 	int err = 0;
 	//double rho0 = 650.0;
@@ -227,9 +224,9 @@ int if97_gamma_pt(double p, double t, iapws_state_id state, iapws_phi *gamma)
 	return err;
 }
 
-int if97_gamma_ph(double p, double h, iapws_phi *gamma)
+int if97_gamma_ph(double p, double h, struct iapws_phi *gamma)
 {
-	if97_region_id reg = if97_region_ph(p, h);
+	enum if97_region reg = if97_region_ph(p, h);
 	gamma->R = IF97_R;
 	switch (reg) {
 		case IF97_REGION_1:
@@ -244,12 +241,33 @@ int if97_gamma_ph(double p, double h, iapws_phi *gamma)
 	assert(0);
 }
 
+static double sumpowij(const double x, const double y,
+		const struct Nij *coef, const int n)
+{
+	double ans = 0.0;
+	COEF_ITERATE2(coef, n, x, y, ans += _ans_;);
+	return ans;
+}
+
+static void sumpowij_gamma(const double x, const double y,
+		const struct Nij *coef, const int n,
+		struct iapws_phi *gamma)
+{
+	COEF_ITERATE2(coef, n, x, y,
+		gamma->d00 += _ans_;
+		gamma->d10 += _ans_ * coef[_ind_].i;
+		gamma->d01 += _ans_ * coef[_ind_].j;
+		gamma->d11 += _ans_ * coef[_ind_].i * coef[_ind_].j;
+		gamma->d20 += _ans_ * coef[_ind_].i * (coef[_ind_].i - 1);
+		gamma->d02 += _ans_ * coef[_ind_].j * (coef[_ind_].j - 1);
+	);
+}
+
 /* Region 1 */
 
-static void gamma_r1(double p, double t, iapws_phi *gamma)
+static void gamma_r1(double p, double t, struct iapws_phi *gamma)
 {
-	enum { SIZE = 34 };
-	const if97_coef coef[SIZE] = {
+	const struct Nij coef[34] = {
 		{  0,	 -2,	 0.14632971213167     },
 		{  0,	 -1,	-0.84548187169114     },
 		{  0,	  0,	-0.37563603672040e1   },
@@ -292,9 +310,6 @@ static void gamma_r1(double p, double t, iapws_phi *gamma)
 	const double xxp = pi / xp;
 	const double xxt = tau / xt;
 
-	int i;
-	double xi, xj, xn;
-
 	gamma->type = IAPWS_GAMMA;
 	gamma->d00 = 0.0;
 	gamma->d10 = 0.0;
@@ -304,22 +319,9 @@ static void gamma_r1(double p, double t, iapws_phi *gamma)
 	gamma->d02 = 0.0;
 	gamma->p = p;
 	gamma->t = t;
-	for (i = 0; i < SIZE; ++i) {
-		if (i != 0) {
-			xi *= powint(xp, coef[i].I - coef[i - 1].I);
-			xj *= powint(xt, coef[i].J - coef[i - 1].J);
-		} else {
-			xi = powint(xp, coef[i].I);
-			xj = powint(xt, coef[i].J);
-		}
-		xn = coef[i].n * xi * xj;
-		gamma->d00 += xn;
-		gamma->d10 += xn * coef[i].I;
-		gamma->d01 += xn * coef[i].J;
-		gamma->d11 += xn * coef[i].I * coef[i].J;
-		gamma->d20 += xn * coef[i].I * (coef[i].I - 1);
-		gamma->d02 += xn * coef[i].J * (coef[i].J - 1);
-	}
+
+	sumpowij_gamma(xp, xt, coef, ARRAY_SIZE(coef), gamma);
+
 	gamma->d10 *= xxp;
 	gamma->d01 *= xxt;
 	gamma->d11 *= xxp * xxt;
@@ -329,8 +331,7 @@ static void gamma_r1(double p, double t, iapws_phi *gamma)
 
 static double t_r1_ph(double p, double h)
 {
-	enum { SIZE = 20 };
-	const if97_coef coef[SIZE] = {
+	const struct Nij coef[20] = {
 		{ 0,	 0,	-0.23872489924521e+3  },
 		{ 0,	 1,	 0.40421188637945e+3  },
 		{ 0,	 2,	 0.11349746881718e+3  },
@@ -353,64 +354,37 @@ static double t_r1_ph(double p, double h)
 		{ 6,	32,	-0.15020185953503e-16 },
 	};
 
-	int i;
-	double xi, xj;
-	double ans = 0.0;
-
-	h = h * 4.0e-4 + 1.0;
-	for (i = 0; i < SIZE; ++i) {
-		if (i != 0) {
-			xi *= powint(p, coef[i].I - coef[i - 1].I);
-			xj *= powint(h, coef[i].J - coef[i - 1].J);
-		} else {
-			xi = powint(p, coef[i].I);
-			xj = powint(h, coef[i].J);
-		}
-		ans += coef[i].n * xi * xj;
-	}
-	return ans;
+	return sumpowij(p, h * 4.0e-4 + 1.0, coef, ARRAY_SIZE(coef));
 }
 
-static void get_gamma_r1_ph(double *t, void *xphi, double *h, double *dh)
+static int gamma_r1_ph(double p, double h, struct iapws_phi *gamma)
 {
-	iapws_phi *gamma = (iapws_phi *)(xphi);
-	gamma_r1(gamma->p, *t, gamma);
-	*h = gamma->d01 * gamma->R * gamma->t - gamma->h;
-	*dh = -gamma->d02 * gamma->R;
-}
-
-static int gamma_r1_ph(double p, double h, iapws_phi *gamma)
-{
-	nroot_control ctrl = nroot_default;
+	struct nroot_control ctrl = nroot_default;
 	gamma->p = p;
 	gamma->h = h;
 	gamma->t = t_r1_ph(p, h);
-	return nroot1(get_gamma_r1_ph, &gamma->t, gamma, &ctrl);
+	struct iapws_phi_call call = { gamma_r1, gamma };
+	return nroot1(get_gamma_ph, &gamma->t, &call, &ctrl);
 }
 
 /* Region 2 */
 
-static void gamma_r2(double p, double t, int meta, iapws_phi *gamma)
+static void gamma_r2(double p, double t, int meta, struct iapws_phi *gamma)
 {
 	assert(meta == 0 || meta == 1);
 
-	enum {
-		SIZE0 = 9,
-		SIZE1 = SIZE0 + 43,
-		SIZE2 = SIZE0 + 13,
-	};
-	const if97_coef coef1[SIZE1] = {
-		/* gamma_0 */
-		{ 0,	 0,	-0.96927686500217e1  },
-		{ 0,	 1,	 0.10086655968018e2  },
+	const struct Nij coef0[9] = {
 		{ 0,	-5,	-0.56087911283020e-2 },
 		{ 0,	-4,	 0.71452738081455e-1 },
 		{ 0,	-3,	-0.40710498223928    },
 		{ 0,	-2,	 0.14240819171444e1  },
 		{ 0,	-1,	-0.43839511319450e1  },
+		{ 0,	 0,	-0.96927686500217e1  },
+		{ 0,	 1,	 0.10086655968018e2  },
 		{ 0,	 2,	-0.28408632460772    },
 		{ 0,	 3,	 0.21268463753307e-1 },
-		/* gamma_r */
+	};
+	const struct Nij coefr[43] = {
 		{  1,	 0,	-0.17731742473213e-2  },
 		{  1,	 1,	-0.17834862292358e-1  },
 		{  1,	 2,	-0.45996013696365e-1  },
@@ -455,18 +429,18 @@ static void gamma_r2(double p, double t, int meta, iapws_phi *gamma)
 		{ 24,	40,	 0.55414715350778e-16 },
 		{ 24,	58,	-0.94369707241210e-6  },
 	};
-	const if97_coef coef2[SIZE2] = {
-		/* gamma_0m */
-		{ 0,	 0,	-0.96937268393049e1  },
-		{ 0,	 1,	 0.10087275970006e2  },
+	const struct Nij coef0m[9] = {
 		{ 0,	-5,	-0.56087911283020e-2 },
 		{ 0,	-4,	 0.71452738081455e-1 },
 		{ 0,	-3,	-0.40710498223928    },
 		{ 0,	-2,	 0.14240819171444e1  },
 		{ 0,	-1,	-0.43839511319450e1  },
+		{ 0,	 0,	-0.96937268393049e1  },
+		{ 0,	 1,	 0.10087275970006e2  },
 		{ 0,	 2,	-0.28408632460772    },
 		{ 0,	 3,	 0.21268463753307e-1 },
-		/* gamma_rm */
+	};
+	const struct Nij coefrm[13] = {
 		{ 1,	 0,	-0.73362260186506e-2 },
 		{ 1,	 2,	-0.88223831943146e-1 },
 		{ 1,	 5,	-0.72334555213245e-1 },
@@ -487,16 +461,19 @@ static void gamma_r2(double p, double t, int meta, iapws_phi *gamma)
 	const double xt = tau - 0.5;
 	const double xxt = tau / xt;
 
-	int i, n;
-	const if97_coef *coef;
-	double xi, xj, xn;
+	int n1, n2;
+	const struct Nij *coef1, *coef2;
 
 	if (meta == 0) {
-		n = SIZE1;
-		coef = coef1;
+		n1 = ARRAY_SIZE(coef0);
+		coef1 = coef0;
+		n2 = ARRAY_SIZE(coefr);
+		coef2 = coefr;
 	} else {
-		n = SIZE2;
-		coef = coef2;
+		n1 = ARRAY_SIZE(coef0m);
+		coef1 = coef0m;
+		n2 = ARRAY_SIZE(coefrm);
+		coef2 = coefrm;
 	}
 
 	/* gamma_0 */
@@ -509,31 +486,11 @@ static void gamma_r2(double p, double t, int meta, iapws_phi *gamma)
 	gamma->d02 = 0.0;
 	gamma->p = p;
 	gamma->t = t;
-	for (i = 0; i < SIZE0; ++i) {
-		xn = coef[i].n * powint(tau, coef[i].J);
-		gamma->d00 += xn;
-		gamma->d01 += xn * coef[i].J;
-		gamma->d02 += xn * coef[i].J * (coef[i].J - 1);
-	}
+	sumpowij_gamma(1.0, tau, coef1, n1, gamma);
 
 	/* gamma_r */
-	iapws_phi gamma_r = { IAPWS_GAMMA };
-	for (i = SIZE0; i < n; ++i) {
-		if (i != SIZE0) {
-			xi *= powint(pi, coef[i].I - coef[i - 1].I);
-			xj *= powint(xt, coef[i].J - coef[i - 1].J);
-		} else {
-			xi = powint(pi, coef[i].I);
-			xj = powint(xt, coef[i].J);
-		}
-		xn = coef[i].n * xi * xj;
-		gamma_r.d00 += xn;
-		gamma_r.d10 += xn * coef[i].I;
-		gamma_r.d01 += xn * coef[i].J;
-		gamma_r.d11 += xn * coef[i].I * coef[i].J;
-		gamma_r.d20 += xn * coef[i].I * (coef[i].I - 1);
-		gamma_r.d02 += xn * coef[i].J * (coef[i].J - 1);
-	}
+	struct iapws_phi gamma_r = { IAPWS_GAMMA };
+	sumpowij_gamma(pi, xt, coef2, n2, &gamma_r);
 	gamma_r.d01 *= xxt;
 	gamma_r.d11 *= xxt;
 	gamma_r.d02 *= xxt * xxt;
@@ -549,12 +506,7 @@ static void gamma_r2(double p, double t, int meta, iapws_phi *gamma)
 
 static double t_r2_ph(double p, double h)
 {
-	enum {
-		SIZEA = 34,
-		SIZEB = 38,
-		SIZEC = 23,
-	};
-	const if97_coef coefa[SIZEA] = {
+	const struct Nij coefa[34] = {
 		{ 0,	 0,	 0.10898952318288e4	},
 		{ 0,	 1,	 0.84951654495535e3	},
 		{ 0,	 2,	-0.10781748091826e3	},
@@ -590,7 +542,7 @@ static double t_r2_ph(double p, double h)
 		{ 6,	44,	-0.41535164835634e6	},
 		{ 7,	28,	-0.62459855192507e2	},
 	};
-	const if97_coef coefb[SIZEB] = {
+	const struct Nij coefb[38] = {
 		{ 0,	 0,	 0.14895041079516e4	},
 		{ 0,	 1,	 0.74307798314034e3	},
 		{ 0,	 2,	-0.97708318797837e2	},
@@ -630,7 +582,7 @@ static double t_r2_ph(double p, double h)
 		{ 9,	 1,	-0.17565233969407e-17	},
 		{ 9,	40,	 0.86934156344163e-14	},
 	};
-	const if97_coef coefc[SIZEC] = {
+	const struct Nij coefc[23] = {
 		{-7,	 0,	-0.32368398555242e13	},
 		{-7,	 4,	 0.73263350902181e13	},
 		{-6,	 0,	 0.35825089945447e12	},
@@ -656,65 +608,49 @@ static double t_r2_ph(double p, double h)
 		{ 6,	22,	 0.12918582991878e-2	},
 	};
 
-	int i, n;
-	const if97_coef *coef;
-	double xi, xj;
-	double ans = 0.0;
+	int n;
+	const struct Nij *coef;
 
 	if (p <= 4.0) {
-		n = SIZEA;
+		n = ARRAY_SIZE(coefa);
 		coef = coefa;
 		h = h * 5.0e-4 - 2.1;
 	} else if (p < pi_b2bc(h)) {
-		n = SIZEB;
+		n = ARRAY_SIZE(coefb);
 		coef = coefb;
 		p -= 2.0;
 		h = h * 5.0e-4 - 2.6;
 	} else {
-		n = SIZEC;
+		n = ARRAY_SIZE(coefc);
 		coef = coefc;
 		p += 25.0;
 		h = h * 5.0e-4 - 1.8;
 	}
 
-	for (i = 0; i < n; ++i) {
-		if (i != 0) {
-			xi *= powint(p, coef[i].I - coef[i - 1].I);
-			//xj *= powint(h, coef[i].J - coef[i - 1].J);
-			xj = powint(h, coef[i].J);
-		} else {
-			xi = powint(p, coef[i].I);
-			xj = powint(h, coef[i].J);
-		}
-		ans += coef[i].n * xi * xj;
-	}
-	return ans;
+	return sumpowij(p, h, coef, n);
 }
 
-static void get_gamma_r2_ph(double *t, void *xphi, double *h, double *dh)
+static void gamma_r2_0(double p, double t, struct iapws_phi *gamma)
 {
-	iapws_phi *gamma = (iapws_phi *)(xphi);
-	gamma_r2(gamma->p, *t, 0, gamma);
-	*h = gamma->d01 * gamma->R * gamma->t - gamma->h;
-	*dh = -gamma->d02 * gamma->R;
+	gamma_r2(p, t, 0, gamma);
 }
 
-static int gamma_r2_ph(double p, double h, iapws_phi *gamma)
+static int gamma_r2_ph(double p, double h, struct iapws_phi *gamma)
 {
-	nroot_control ctrl = nroot_default;
+	struct nroot_control ctrl = nroot_default;
 	gamma->p = p;
 	gamma->h = h;
 	gamma->t = t_r2_ph(p, h);
-	return nroot1(get_gamma_r2_ph, &gamma->t, gamma, &ctrl);
+	struct iapws_phi_call call = { gamma_r2_0, gamma };
+	return nroot1(get_gamma_ph, &gamma->t, &call, &ctrl);
 }
 
 /* Region 3 */
 
-static void phi_r3(double rho, double t, iapws_phi *phi)
+static void phi_r3(double rho, double t, struct iapws_phi *phi)
 {
-	enum { SIZE = 40 };
-	const if97_coef coef[SIZE] = {
-		{ 0,	0,	 0.10658070028513e1  },
+	const double n0 = 0.10658070028513e1;
+	const struct Nij coef[39] = {
 		{ 0,	0,	-0.15732845290239e2  },
 		{ 0,	1,	 0.20944396974307e2  },
 		{ 0,	2,	-0.76867707878716e1  },
@@ -759,62 +695,32 @@ static void phi_r3(double rho, double t, iapws_phi *phi)
 	const double delta = rho / IAPWS_RHOC;
 	const double tau = IAPWS_TC / t;
 
-	int i;
-	double xi, xj, xn;
-
 	phi->type = IAPWS_PHI;
-	phi->d00 = coef[0].n * log(delta);
-	phi->d10 = coef[0].n;
-	phi->d01 = 0.0;
-	phi->d11 = 0.0;
-	phi->d20 = -coef[0].n;
-	phi->d02 = 0.0;
 	phi->rho = rho;
 	phi->t = t;
 
-	for (i = 1; i < SIZE; ++i) {
-		if (i != 1) {
-			xi *= powint(delta, coef[i].I - coef[i - 1].I);
-			//xj *= powint(tau, coef[i].J - coef[i - 1].J);
-			xj = powint(tau, coef[i].J);
-		} else {
-			xi = powint(delta, coef[i].I);
-			xj = powint(tau, coef[i].J);
-		}
-		xn = coef[i].n * xi * xj;
-		phi->d00 += xn;
-		phi->d10 += xn * coef[i].I;
-		phi->d01 += xn * coef[i].J;
-		phi->d11 += xn * coef[i].I * coef[i].J;
-		phi->d20 += xn * coef[i].I * (coef[i].I - 1);
-		phi->d02 += xn * coef[i].J * (coef[i].J - 1);
-	}
+	phi->d00 = n0 * log(delta);
+	phi->d10 = n0;
+	phi->d01 = 0.0;
+	phi->d11 = 0.0;
+	phi->d20 = -n0;
+	phi->d02 = 0.0;
+
+	sumpowij_gamma(delta, tau, coef, ARRAY_SIZE(coef), phi);
 }
 
-static void get_phi_r3_pt(double *rho, void *xphi, double *p, double *dp)
+static int phi_r3_pt(double p, double t, struct iapws_phi *phi)
 {
-	iapws_phi *phi = (iapws_phi *)(xphi);
-	phi_r3(*rho, phi->t, phi);
-	double fact = phi->R * phi->t * 1e-3;
-	*p = phi->d10 * (*rho) * fact - phi->p;
-	*dp = (phi->d10 * 2.0 + phi->d20) * fact;
-}
-
-static int phi_r3_pt(double p, double t, iapws_phi *phi)
-{
-	nroot_control ctrl = nroot_default;
+	struct nroot_control ctrl = nroot_default;
 	phi->p = p;
 	phi->t = t;
-	return nroot1(get_phi_r3_pt, &phi->rho, phi, &ctrl);
+	struct iapws_phi_call call = { phi_r3, phi };
+	return nroot1(get_phi_pt, &phi->rho, &call, &ctrl);
 }
 
 static double t_r3_ph(double p, double h)
 {
-	enum {
-		SIZEA = 31,
-		SIZEB = 33,
-	};
-	const if97_coef coefa[SIZEA] = {
+	const struct Nij coefa[31] = {
 		{ -12,	0,	-0.133645667811215e-6	},
 		{ -12,	1,	 0.455912656802978e-5	},
 		{ -12,	2,	-0.146294640700979e-4	},
@@ -847,7 +753,7 @@ static double t_r3_ph(double p, double h)
 		{ 10,	4,	 0.136176427574291e-1	},
 		{ 12,	5,	-0.133027883575669e-1	},
 	};
-	const if97_coef coefb[SIZEB] = {
+	const struct Nij coefb[33] = {
 		{ -12,	0,	 0.323254573644920e-4	},
 		{ -12,	1,	-0.127575556587181e-3	},
 		{ -10,	0,	-0.475851877356068e-3	},
@@ -883,46 +789,30 @@ static double t_r3_ph(double p, double h)
 		{ 8,	1,	 0.676682064330275e-2	},
 	};
 
-	int i, n;
-	const if97_coef *coef;
-	double xi, xj, ts;
-	double ans = 0.0;
+	int n;
+	const struct Nij *coef;
+	double ts;
 
 	if (h < eta_b3ab(p)) {
-		n = SIZEA;
+		n = ARRAY_SIZE(coefa);
 		coef = coefa;
 		ts = 760.0;
 		p = p * 0.01 + 0.24;
 		h = h / 2300.0 - 0.615;
 	} else {
-		n = SIZEB;
+		n = ARRAY_SIZE(coefb);
 		coef = coefb;
 		ts = 860.0;
 		p = p * 0.01 + 0.298;
 		h = h / 2800.0 - 0.72;
 	}
 
-	for (i = 0; i < n; ++i) {
-		if (i != 0) {
-			xi *= powint(p, coef[i].I - coef[i - 1].I);
-			//xj *= powint(h, coef[i].J - coef[i - 1].J);
-			xj = powint(h, coef[i].J);
-		} else {
-			xi = powint(p, coef[i].I);
-			xj = powint(h, coef[i].J);
-		}
-		ans += coef[i].n * xi * xj;
-	}
-	return ans * ts;
+	return sumpowij(p, h, coef, n) * ts;
 }
 
 static double v_r3_ph(double p, double h)
 {
-	enum {
-		SIZEA = 32,
-		SIZEB = 30,
-	};
-	const if97_coef coefa[SIZEA] = {
+	const struct Nij coefa[32] = {
 		{ -12,	 6,	 0.529944062966028e-2	},
 		{ -12,	 8,	-0.170099690234461	},
 		{ -12,	12,	 0.111323814312927e2	},
@@ -956,7 +846,7 @@ static double v_r3_ph(double p, double h)
 		{  5,	 2,	 0.110533464706142e1	},
 		{  8,	 2,     -0.408757344495612e-1	},
 	};
-	const if97_coef coefb[SIZEB] = {
+	const struct Nij coefb[30] = {
 		{ -12,	 0,	-0.225196934336318e-8	},
 		{ -12,	 1,	 0.140674363313486e-7	},
 		{ -8,	 0,	 0.233784085280560e-5	},
@@ -989,63 +879,35 @@ static double v_r3_ph(double p, double h)
 		{  2,	 6,	 0.160697101092520e1	},
 	};
 
-	int i, n;
-	const if97_coef *coef;
-	double xi, xj, vs;
-	double ans = 0.0;
+	int n;
+	const struct Nij *coef;
+	double vs;
 
 	if (h < eta_b3ab(p)) {
-		n = SIZEA;
+		n = ARRAY_SIZE(coefa);
 		coef = coefa;
 		vs = 2.8e-3;
 		p = p * 0.01 + 0.128;
 		h = h / 2100.0 - 0.727;
 	} else {
-		n = SIZEB;
+		n = ARRAY_SIZE(coefb);
 		coef = coefb;
 		vs = 8.8e-3;
 		p = p * 0.01 + 0.0661;
 		h = h / 2800.0 - 0.72;
 	}
 
-	for (i = 0; i < n; ++i) {
-		if (i != 0) {
-			xi *= powint(p, coef[i].I - coef[i - 1].I);
-			//xj *= powint(h, coef[i].J - coef[i - 1].J);
-			xj = powint(h, coef[i].J);
-		} else {
-			xi = powint(p, coef[i].I);
-			xj = powint(h, coef[i].J);
-		}
-		ans += coef[i].n * xi * xj;
-	}
-	return ans * vs;
+	return sumpowij(p, h, coef, n) * vs;
 }
 
-static void get_phi_r3_ph(double *rhot, void *xphi, double *ph, double *dph)
+static int phi_r3_ph(double p, double h, struct iapws_phi *phi)
 {
-	double rho = rhot[0];
-	double t = rhot[1];
-
-	iapws_phi *phi = (iapws_phi *)(xphi);
-	phi_r3(rho, t, phi);
-
-	ph[0] = phi->d10 * rho * phi->R * t * 1e-3 - phi->p;
-	ph[1] = (phi->d10 + phi->d01) * phi->R * t - phi->h;
-
-	dph[0] = (phi->d10 * 2.0 + phi->d20) * phi->R * t * 1e-3;
-	dph[1] = (phi->d10 + phi->d20 + phi->d11) / rho * phi->R * t;
-	dph[2] = (phi->d10 - phi->d11) * rho * phi->R * 1e-3;
-	dph[3] = (phi->d10 - phi->d11 - phi->d02) * phi->R;
-}
-
-static int phi_r3_ph(double p, double h, iapws_phi *phi)
-{
-	nroot_control ctrl = nroot_default;
+	struct nroot_control ctrl = nroot_default;
 	double rhot[2] = { 1.0 / v_r3_ph(p, h), t_r3_ph(p, h) };
 	phi->p = p;
 	phi->h = h;
-	return nroot2(get_phi_r3_ph, rhot, phi, &ctrl);
+	struct iapws_phi_call call = { phi_r3, phi };
+	return nroot2(get_phi_ph, rhot, &call, &ctrl);
 }
 
 /* Region 4 */
@@ -1084,21 +946,17 @@ static double theta_r4(double pi)
 
 /* Region 5 */
 
-static void gamma_r5(double p, double t, iapws_phi *gamma)
+static void gamma_r5(double p, double t, struct iapws_phi *gamma)
 {
-	enum {
-		SIZE0 = 6,
-		SIZER = 6,
-	};
-	const if97_coef coef0[SIZE0] = {
-		{ 0,	 0,	-0.13179983674201e2  },
-		{ 0,	 1,	 0.68540841634434e1  },
+	const struct Nij coef[6 + 6] = {
+		/* gamma_0 */
 		{ 0,	-3,	-0.24805148933466e-1 },
 		{ 0,	-2,	 0.36901534980333    },
 		{ 0,	-1,	-0.31161318213925e1  },
+		{ 0,	 0,	-0.13179983674201e2  },
+		{ 0,	 1,	 0.68540841634434e1  },
 		{ 0,	 2,	-0.32961626538917    },
-	};
-	const if97_coef coefr[SIZER] = {
+		/* gamma_r */
 		{ 1,	1,	 0.15736404855259e-2 },
 		{ 1,	2,	 0.90153761673944e-3 },
 		{ 1,	3,	-0.50270077677648e-2 },
@@ -1110,43 +968,20 @@ static void gamma_r5(double p, double t, iapws_phi *gamma)
 	const double pi = p;
 	const double tau = 1000.0 / t;
 
-	int i;
-	double xi, xj, xn;
+	gamma->type = IAPWS_GAMMA;
+	gamma->p = p;
+	gamma->t = t;
 
 	/* gamma_0 */
-	gamma->type = IAPWS_GAMMA;
 	gamma->d00 = log(pi);
 	gamma->d10 = 1.0;
 	gamma->d01 = 0.0;
 	gamma->d11 = 0.0;
 	gamma->d20 = -1.0;
 	gamma->d02 = 0.0;
-	gamma->p = p;
-	gamma->t = t;
-	for (i = 0; i < SIZE0; ++i) {
-		xn = coef0[i].n * powint(tau, coef0[i].J);
-		gamma->d00 += xn;
-		gamma->d01 += xn * coef0[i].J;
-		gamma->d02 += xn * coef0[i].J * (coef0[i].J - 1);
-	}
 
-	/* gamma_r */
-	for (i = 0; i < SIZER; ++i) {
-		if (i != 0) {
-			xi *= powint(pi, coefr[i].I - coefr[i - 1].I);
-			xj *= powint(tau, coefr[i].J - coefr[i - 1].J);
-		} else {
-			xi = powint(pi, coefr[i].I);
-			xj = powint(tau, coefr[i].J);
-		}
-		xn = coefr[i].n * xi * xj;
-		gamma->d00 += xn;
-		gamma->d10 += xn * coefr[i].I;
-		gamma->d01 += xn * coefr[i].J;
-		gamma->d11 += xn * coefr[i].I * coefr[i].J;
-		gamma->d20 += xn * coefr[i].I * (coefr[i].I - 1);
-		gamma->d02 += xn * coefr[i].J * (coefr[i].J - 1);
-	}
+	/* gamma_0 & gamma_r */
+	sumpowij_gamma(pi, tau, coef, ARRAY_SIZE(coef), gamma);
 }
 
 /* Boundary between regions 2 and 3 */
@@ -1205,8 +1040,7 @@ static double eta_b3ab(double pi)
 
 static double p_b34_h(double h)
 {
-	enum { SIZE = 14 };
-	const if97_coef coef[SIZE] = {
+	const struct Nij coef[14] = {
 		{  0,	 0,	 0.600073641753024    },
 		{  1,	 1,	-0.936203654849857e1  },
 		{  1,	 3,	 0.246590798594147e2  },
@@ -1223,24 +1057,8 @@ static double p_b34_h(double h)
 		{ 36,	24,	 0.813641294467829e38 },
 	};
 
-	int i;
-	double xi, xj;
-	double ans = 0.0;
-
-	const double etai = h / 2600.0 - 1.02;
-	const double etaj = h / 2600.0 - 0.608;
-
-	for (i = 0; i < SIZE; ++i) {
-		if (i != 0) {
-			xi *= powint(etai, coef[i].I - coef[i - 1].I);
-			xj *= powint(etaj, coef[i].J - coef[i - 1].J);
-		} else {
-			xi = powint(etai, coef[i].I);
-			xj = powint(etaj, coef[i].J);
-		}
-		ans += coef[i].n * xi * xj;
-	}
-	return ans * 22.0;
+	h /= 2600.0;
+	return sumpowij(h - 1.02, h - 0.608, coef, ARRAY_SIZE(coef)) * 22.0;
 }
 
 enum if97_b3 {
@@ -1259,85 +1077,72 @@ enum if97_b3 {
 };
 static double t_b3(double p, enum if97_b3 b)
 {
-	enum {
-		SIZEAB = 5,
-		SIZECD = 4,
-		SIZEGH = 5,
-		SIZEIJ = 5,
-		SIZEJK = 5,
-		SIZEMN = 4,
-		SIZEOP = 5,
-		SIZEQU = 4,
-		SIZERX = 4,
-		SIZEUV = 4,
-		SIZEWX = 5,
-	};
-	const double coefab[SIZEAB] = {
+	const double coefab[5] = {
 		 0.918419702359447e3,
 		-0.191887498864292e4,
 		 0.154793642129415e4,
 		-0.187661219490113e3,
 		 0.213144632222113e2,
 	};
-	const double coefcd[SIZECD] = {
+	const double coefcd[4] = {
 		 0.585276966696349e3,
 		 0.278233532206915e1,
 		-0.127283549295878e-1,
 		 0.159090746562729e-3,
 	};
-	const double coefgh[SIZEGH] = {
+	const double coefgh[5] = {
 		-0.249284240900418e5,
 		 0.428143584791546e4,
 		-0.269029173140130e3,
 		 0.751608051114157e1,
 		-0.787105249910383e-1,
 	};
-	const double coefij[SIZEIJ] = {
+	const double coefij[5] = {
 		 0.584814781649163e3,
 		-0.616179320924617,
 		 0.260763050899562,
 		-0.587071076864459e-2,
 		 0.515308185433082e-4,
 	};
-	const double coefjk[SIZEJK] = {
+	const double coefjk[5] = {
 		 0.617229772068439e3,
 		-0.770600270141675e1,
 		 0.697072596851896,
 		-0.157391839848015e-1,
 		 0.137897492684194e-3,
 	};
-	const double coefmn[SIZEMN] = {
+	const double coefmn[4] = {
 		 0.535339483742384e3,
 		 0.761978122720128e1,
 		-0.158365725441648,
 		 0.192871054508108e-2,
 	};
-	const double coefop[SIZEOP] = {
+	const double coefop[5] = {
 		-0.152313732937084e4,
 		 0.773845935768222e3,
 		 0.969461372400213e3,
 		-0.332500170441278e3,
 		 0.642859598466067e2,
 	};
-	const double coefqu[SIZEQU] = {
+	const double coefqu[4] = {
 		 0.565603648239126e3,
 		 0.529062258221222e1,
 		-0.102020639611016,
 		 0.122240301070145e-2,
 	};
-	const double coefrx[SIZERX] = {
+	const double coefrx[4] = {
 		 0.584561202520006e3,
 		-0.102961025163669e1,
 		 0.243293362700452,
 		-0.294905044740799e-2,
 	};
-	const double coefuv[SIZEUV] = {
+	const double coefuv[4] = {
 		 0.528199646263062e3,
 		 0.890579602135307e1,
 		-0.222814134903755,
 		 0.286791682263697e-2,
 	};
-	const double coefwx[SIZEWX] = {
+	const double coefwx[5] = {
 		0.873371668682417e3,
 		0.329196213998375e3,
 		0.728052609145380e1,
@@ -1352,53 +1157,53 @@ static double t_b3(double p, enum if97_b3 b)
 
 	switch (b) {
 		case B3AB:
-			n = SIZEAB;
+			n = ARRAY_SIZE(coefab);
 			coef = coefab;
 			p = log(p);
 			pi = 1.0 / (p * p);
 			break;
 		case B3CD:
-			n = SIZECD;
+			n = ARRAY_SIZE(coefcd);
 			coef = coefcd;
 			break;
 		case B3EF:
 			return 3.727888004 * (p - IAPWS_PC) + IAPWS_TC;
 		case B3GH:
-			n = SIZEGH;
+			n = ARRAY_SIZE(coefgh);
 			coef = coefgh;
 			break;
 		case B3IJ:
-			n = SIZEIJ;
+			n = ARRAY_SIZE(coefij);
 			coef = coefij;
 			break;
 		case B3JK:
-			n = SIZEJK;
+			n = ARRAY_SIZE(coefjk);
 			coef = coefjk;
 			break;
 		case B3MN:
-			n = SIZEMN;
+			n = ARRAY_SIZE(coefmn);
 			coef = coefmn;
 			break;
 		case B3OP:
-			n = SIZEOP;
+			n = ARRAY_SIZE(coefop);
 			coef = coefop;
 			p = log(p);
 			pi = 1.0 / (p * p);
 			break;
 		case B3QU:
-			n = SIZEQU;
+			n = ARRAY_SIZE(coefqu);
 			coef = coefqu;
 			break;
 		case B3RX:
-			n = SIZERX;
+			n = ARRAY_SIZE(coefrx);
 			coef = coefrx;
 			break;
 		case B3UV:
-			n = SIZEUV;
+			n = ARRAY_SIZE(coefuv);
 			coef = coefuv;
 			break;
 		case B3WX:
-			n = SIZEWX;
+			n = ARRAY_SIZE(coefwx);
 			coef = coefwx;
 			p = log(p);
 			pi = 1.0 / (p * p);
@@ -1412,35 +1217,7 @@ static double t_b3(double p, enum if97_b3 b)
 
 static double v_r3_pt(double p, double t)
 {
-	enum {
-		SIZEA = 30,
-		SIZEB = 32,
-		SIZEC = 35,
-		SIZED = 38,
-		SIZEE = 29,
-		SIZEF = 42,
-		SIZEG = 38,
-		SIZEH = 29,
-		SIZEI = 42,
-		SIZEJ = 29,
-		SIZEK = 34,
-		SIZEL = 43,
-		SIZEM = 40,
-		SIZEN = 39,
-		SIZEO = 24,
-		SIZEP = 27,
-		SIZEQ = 24,
-		SIZER = 27,
-		SIZES = 29,
-		SIZET = 33,
-		SIZEU = 38,
-		SIZEV = 39,
-		SIZEW = 35,
-		SIZEX = 36,
-		SIZEY = 20,
-		SIZEZ = 23,
-	};
-	const if97_coef coefa[SIZEA] = {
+	const struct Nij coefa[30] = {
 		{ -12,	  5,	 0.110879558823853e-02	},
 		{ -12,	 10,	 0.572616740810616e+03	},
 		{ -12,	 12,	-0.767051948380852e+05	},
@@ -1472,7 +1249,7 @@ static double v_r3_pt(double p, double t)
 		{   2,	  0,	 0.633828037528420e-02	},
 		{   2,	  2,	 0.797441793901017e-01	},
 	};
-	const if97_coef coefb[SIZEB] = {
+	const struct Nij coefb[32] = {
 		{ -12,	 10,	-0.827670470003621e-01	},
 		{ -12,	 12,	 0.416887126010565e+02	},
 		{ -10,	  8,	 0.483651982197059e-01	},
@@ -1506,7 +1283,7 @@ static double v_r3_pt(double p, double t)
 		{   4,	  0,	-0.269798180310075e-01	},
 		{   4,	  1,	 0.128369435967012e+00	},
 	};
-	const if97_coef coefc[SIZEC] = {
+	const struct Nij coefc[35] = {
 		{ -12,	  6,	 0.311967788763030e+01	},
 		{ -12,	  8,	 0.276713458847564e+05	},
 		{ -12,	 10,	 0.322583103403269e+08	},
@@ -1543,7 +1320,7 @@ static double v_r3_pt(double p, double t)
 		{   3,	  7,	-0.107077716660869e+07	},
 		{   8,	  1,	 0.438319858566475e-01	},
 	};
-	const if97_coef coefd[SIZED] = {
+	const struct Nij coefd[38] = {
 		{ -12,	  4,	-0.452484847171645e-09	},
 		{ -12,	  6,	 0.315210389538801e-04	},
 		{ -12,	  7,	-0.214991352047545e-02	},
@@ -1583,7 +1360,7 @@ static double v_r3_pt(double p, double t)
 		{   1,	  6,	 0.498044171727877e+04	},
 		{   3,	  0,	 0.551478022765087e-02	},
 	};
-	const if97_coef coefe[SIZEE] = {
+	const struct Nij coefe[29] = {
 		{ -12,	 14,	 0.715815808404721e+09	},
 		{ -12,	 16,	-0.114328360753449e+12	},
 		{ -10,	  3,	 0.376531002015720e-11	},
@@ -1614,7 +1391,7 @@ static double v_r3_pt(double p, double t)
 		{   2,	  0,	 0.413197481515899e+00	},
 		{   2,	  2,	-0.341931835910405e+02	},
 	};
-	const if97_coef coeff[SIZEF] = {
+	const struct Nij coeff[42] = {
 		{   0,	 -3,	-0.251756547792325e-07	},
 		{   0,	 -2,	 0.601307193668763e-05	},
 		{   0,	 -1,	-0.100615977450049e-02	},
@@ -1658,7 +1435,7 @@ static double v_r3_pt(double p, double t)
 		{  28,	-12,	 0.189424143498011e-09	},
 		{  32,	-12,	-0.486632965074563e-09	},
 	};
-	const if97_coef coefg[SIZEG] = {
+	const struct Nij coefg[38] = {
 		{ -12,	  7,	 0.412209020652996e-04	},
 		{ -12,	 12,	-0.114987238280587e+07	},
 		{ -12,	 14,	 0.948180885032080e+10	},
@@ -1698,7 +1475,7 @@ static double v_r3_pt(double p, double t)
 		{  10,	  0,	-0.367279669545448e+05	},
 		{  10,	  6,	-0.837513931798655e+16	},
 	};
-	const if97_coef coefh[SIZEH] = {
+	const struct Nij coefh[29] = {
 		{ -12,	  8,	 0.561379678887577e-01	},
 		{ -12,	 12,	 0.774135421587083e+10	},
 		{ -10,	  4,	 0.111482975877938e-08	},
@@ -1729,7 +1506,7 @@ static double v_r3_pt(double p, double t)
 		{   1,	  0,	-0.211346402240858e+00	},
 		{   1,	  2,	 0.249971752957491e+02	},
 	};
-	const if97_coef coefi[SIZEI] = {
+	const struct Nij coefi[42] = {
 		{   0,	  0,	 0.106905684359136e+01	},
 		{   0,	  1,	-0.148620857922333e+01	},
 		{   0,	 10,	 0.259862256980408e+15	},
@@ -1773,7 +1550,7 @@ static double v_r3_pt(double p, double t)
 		{  36,	-10,	-0.247690616026922e-01	},
 		{  36,	 -8,	 0.658110546759474e+02	},
 	};
-	const if97_coef coefj[SIZEJ] = {
+	const struct Nij coefj[29] = {
 		{   0,	 -1,	-0.111371317395540e-03	},
 		{   0,	  0,	 0.100342892423685e+01	},
 		{   0,	  1,	 0.530615581928979e+01	},
@@ -1804,7 +1581,7 @@ static double v_r3_pt(double p, double t)
 		{  28,	-12,	 0.283911742354706e-10	},
 		{  28,	 -5,	 0.270929002720228e+01	},
 	};
-	const if97_coef coefk[SIZEK] = {
+	const struct Nij coefk[34] = {
 		{  -2,	 10,	-0.401215699576099e+09	},
 		{  -2,	 12,	 0.484501478318406e+11	},
 		{  -1,	 -5,	 0.394721471363678e-14	},
@@ -1840,7 +1617,7 @@ static double v_r3_pt(double p, double t)
 		{  10,	-12,	-0.149095328506000e-11	},
 		{  12,	-10,	 0.541449377329581e-08	},
 	};
-	const if97_coef coefl[SIZEL] = {
+	const struct Nij coefl[43] = {
 		{ -12,	 14,	 0.260702058647537e+10	},
 		{ -12,	 16,	-0.188277213604704e+15	},
 		{ -12,	 18,	 0.554923870289667e+19	},
@@ -1885,7 +1662,7 @@ static double v_r3_pt(double p, double t)
 		{  10,	 12,	-0.445703369196945e+33	},
 		{  14,	 10,	 0.642794932373694e+33	},
 	};
-	const if97_coef coefm[SIZEM] = {
+	const struct Nij coefm[40] = {
 		{   0,	  0,	 0.811384363481847e+00	},
 		{   0,	 14,	 0.185135446828337e+09	},
 		{   0,	 24,	-0.821698160721956e+15	},
@@ -1927,7 +1704,7 @@ static double v_r3_pt(double p, double t)
 		{  24,	 36,	 0.479817895699239e+65	},
 		{  28,	 20,	 0.368193926183570e+60	},
 	};
-	const if97_coef coefn[SIZEN] = {
+	const struct Nij coefn[39] = {
 		{   0,	-12,	 0.280967799943151e-38	},
 		{   0,	-10,	-0.135031446451331e-31	},
 		{   0,	 -8,	 0.177274872361946e-25	},
@@ -1968,7 +1745,7 @@ static double v_r3_pt(double p, double t)
 		{  14,	-12,	-0.211773355803058e-07	},
 		{  18,	-12,	 0.264953354380072e-02	},
 	};
-	const if97_coef coefo[SIZEO] = {
+	const struct Nij coefo[24] = {
 		{   0,	-12,	 0.128746023979718e-34	},
 		{   0,	 -4,	-0.735234770382342e-11	},
 		{   0,	 -1,	 0.289078692149150e-02	},
@@ -1994,7 +1771,7 @@ static double v_r3_pt(double p, double t)
 		{  20,	-10,	 0.377682649089149e-08	},
 		{  24,	-12,	-0.516720236575302e-10	},
 	};
-	const if97_coef coefp[SIZEP] = {
+	const struct Nij coefp[27] = {
 		{   0,	 -1,	-0.982825342010366e-04	},
 		{   0,	  0,	 0.105145700850612e+01	},
 		{   0,	  1,	 0.116033094095084e+03	},
@@ -2023,7 +1800,7 @@ static double v_r3_pt(double p, double t)
 		{  24,	 -8,	 0.179946628317437e-02	},
 		{  36,	-12,	-0.345042834640005e-03	},
 	};
-	const if97_coef coefq[SIZEQ] = {
+	const struct Nij coefq[24] = {
 		{ -12,	 10,	-0.820433843259950e+05	},
 		{ -12,	 12,	 0.473271518461586e+11	},
 		{ -10,	  6,	-0.805950021005413e-01	},
@@ -2049,7 +1826,7 @@ static double v_r3_pt(double p, double t)
 		{   1,	  1,	 0.247795908411492e+01	},
 		{   1,	  3,	-0.319114969006533e+04	},
 	};
-	const if97_coef coefr[SIZER] = {
+	const struct Nij coefr[27] = {
 		{  -8,	  6,	 0.144165955660863e-02	},
 		{  -8,	 14,	-0.701438599628258e+13	},
 		{  -3,	 -3,	-0.830946716459219e-16	},
@@ -2078,7 +1855,7 @@ static double v_r3_pt(double p, double t)
 		{  12,	-12,	-0.337209709340105e-09	},
 		{  14,	-12,	 0.377501980025469e-08	},
 	};
-	const if97_coef coefs[SIZES] = {
+	const struct Nij coefs[29] = {
 		{ -12,	 20,	-0.532466612140254e+23	},
 		{ -12,	 24,	 0.100415480000824e+32	},
 		{ -10,	 22,	-0.191540001821367e+30	},
@@ -2109,7 +1886,7 @@ static double v_r3_pt(double p, double t)
 		{   5,	  4,	 0.193568768917797e+10	},
 		{  14,	 24,	 0.950898170425042e+54	},
 	};
-	const if97_coef coeft[SIZET] = {
+	const struct Nij coeft[33] = {
 		{   0,	  0,	 0.155287249586268e+01	},
 		{   0,	  1,	 0.664235115009031e+01	},
 		{   0,	  4,	-0.289366236727210e+04	},
@@ -2144,7 +1921,7 @@ static double v_r3_pt(double p, double t)
 		{  32,	 36,	-0.444227367758304e+72	},
 		{  36,	 36,	-0.281396013562745e+77	},
 	};
-	const if97_coef coefu[SIZEU] = {
+	const struct Nij coefu[38] = {
 		{ -12,	 14,	 0.122088349258355e+18	},
 		{ -10,	 10,	 0.104216468608488e+10	},
 		{ -10,	 12,	-0.882666931564652e+16	},
@@ -2184,7 +1961,7 @@ static double v_r3_pt(double p, double t)
 		{  14,	 -6,	-0.227700464643920e+05	},
 		{  14,	  6,	-0.781754507698846e+28	},
 	};
-	const if97_coef coefv[SIZEV] = {
+	const struct Nij coefv[39] = {
 		{ -10,	 -8,	-0.415652812061591e-54	},
 		{  -8,	-12,	 0.177441742924043e-60	},
 		{  -6,	-12,	-0.357078668203377e-54	},
@@ -2225,7 +2002,7 @@ static double v_r3_pt(double p, double t)
 		{  12,	 -3,	-0.100375333864186e+15	},
 		{  14,	  1,	 0.247761392329058e+27	},
 	};
-	const if97_coef coefw[SIZEW] = {
+	const struct Nij coefw[35] = {
 		{ -12,	  8,	-0.586219133817016e-07	},
 		{ -12,	 14,	-0.894460355005526e+11	},
 		{ -10,	 -1,	 0.531168037519774e-30	},
@@ -2262,7 +2039,7 @@ static double v_r3_pt(double p, double t)
 		{  10,	-12,	 0.266170454405981e-13	},
 		{  10,	 -8,	 0.858133791857099e-05	},
 	};
-	const if97_coef coefx[SIZEX] = {
+	const struct Nij coefx[36] = {
 		{  -8,	 14,	 0.377373741298151e+19	},
 		{  -6,	 10,	-0.507100883722913e+13	},
 		{  -5,	 10,	-0.103363225598860e+16	},
@@ -2300,7 +2077,7 @@ static double v_r3_pt(double p, double t)
 		{  14,	 -8,	-0.119228759669889e+04	},
 		{  14,	 -6,	 0.430867658061468e+07	},
 	};
-	const if97_coef coefy[SIZEY] = {
+	const struct Nij coefy[20] = {
 		{   0,	 -3,	-0.525597995024633e-09	},
 		{   0,	  1,	 0.583441305228407e+04	},
 		{   0,	  5,	-0.134778968457925e+17	},
@@ -2322,7 +2099,7 @@ static double v_r3_pt(double p, double t)
 		{  10,	 -5,	 0.514411468376383e+10	},
 		{  12,	 -8,	-0.828198594040141e+05	},
 	};
-	const if97_coef coefz[SIZEZ] = {
+	const struct Nij coefz[23] = {
 		{  -8,	  3,	 0.244007892290650e-10	},
 		{  -6,	  6,	-0.463057430331240e+07	},
 		{  -5,	  6,	 0.728803274777710e+10	},
@@ -2348,38 +2125,14 @@ static double v_r3_pt(double p, double t)
 		{   8,	 -4,	 0.394536049497070e+07	},
 	};
 	enum {
-		R3A,
-		R3B,
-		R3C,
-		R3D,
-		R3E,
-		R3F,
-		R3G,
-		R3H,
-		R3I,
-		R3J,
-		R3K,
-		R3L,
-		R3M,
-		R3N,
-		R3O,
-		R3P,
-		R3Q,
-		R3R,
-		R3S,
-		R3T,
-		R3U,
-		R3V,
-		R3W,
-		R3X,
-		R3Y,
-		R3Z
+		R3A, R3B, R3C, R3D, R3E, R3F, R3G, R3H, R3I, R3J,
+		R3K, R3L, R3M, R3N, R3O, R3P, R3Q, R3R, R3S, R3T,
+		R3U, R3V, R3W, R3X, R3Y, R3Z
 	} r3;
 
-	int i, n, e;
-	const if97_coef *coef;
-	double vs, xi, xj;
-	double ans = 0.0;
+	int n, e;
+	const struct Nij *coef;
+	double ans, vs;
 
 	assert(p < 100.0 && p > pi_r4(623.15));
 	if (p > 40.0) {
@@ -2469,6 +2222,7 @@ static double v_r3_pt(double p, double t)
 		else r3 = R3T;
 	} else {
 		assert(0);
+		return 0.0;
 	}
 
 	switch (r3) {
@@ -2477,7 +2231,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 100.0 - 0.085;
 			t = t / 760.0 - 0.817;
 			e = 1;
-			n = SIZEA;
+			n = ARRAY_SIZE(coefa);
 			coef = coefa;
 			break;
 		case R3B:
@@ -2485,7 +2239,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 100.0 - 0.280;
 			t = t / 860.0 - 0.779;
 			e = 1;
-			n = SIZEB;
+			n = ARRAY_SIZE(coefb);
 			coef = coefb;
 			break;
 		case R3C:
@@ -2493,7 +2247,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 40.0 - 0.259;
 			t = t / 690.0 - 0.903;
 			e = 1;
-			n = SIZEC;
+			n = ARRAY_SIZE(coefc);
 			coef = coefc;
 			break;
 		case R3D:
@@ -2501,7 +2255,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 40.0 - 0.559;
 			t = t / 690.0 - 0.939;
 			e = 4;
-			n = SIZED;
+			n = ARRAY_SIZE(coefd);
 			coef = coefd;
 			break;
 		case R3E:
@@ -2509,7 +2263,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 40.0 - 0.587;
 			t = t / 710.0 - 0.918;
 			e = 1;
-			n = SIZEE;
+			n = ARRAY_SIZE(coefe);
 			coef = coefe;
 			break;
 		case R3F:
@@ -2517,7 +2271,7 @@ static double v_r3_pt(double p, double t)
 			p = sqrt(p / 40.0 - 0.587);
 			t = t / 730.0 - 0.891;
 			e = 4;
-			n = SIZEF;
+			n = ARRAY_SIZE(coeff);
 			coef = coeff;
 			break;
 		case R3G:
@@ -2525,7 +2279,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 25.0 - 0.872;
 			t = t / 660.0 - 0.971;
 			e = 4;
-			n = SIZEG;
+			n = ARRAY_SIZE(coefg);
 			coef = coefg;
 			break;
 		case R3H:
@@ -2533,7 +2287,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 25.0 - 0.898;
 			t = t / 660.0 - 0.983;
 			e = 4;
-			n = SIZEH;
+			n = ARRAY_SIZE(coefh);
 			coef = coefh;
 			break;
 		case R3I:
@@ -2541,7 +2295,7 @@ static double v_r3_pt(double p, double t)
 			p = sqrt(p / 25.0 - 0.910);
 			t = t / 660.0 - 0.984;
 			e = 4;
-			n = SIZEI;
+			n = ARRAY_SIZE(coefi);
 			coef = coefi;
 			break;
 		case R3J:
@@ -2549,7 +2303,7 @@ static double v_r3_pt(double p, double t)
 			p = sqrt(p / 25.0 - 0.875);
 			t = t / 670.0 - 0.964;
 			e = 4;
-			n = SIZEJ;
+			n = ARRAY_SIZE(coefj);
 			coef = coefj;
 			break;
 		case R3K:
@@ -2557,7 +2311,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 25.0 - 0.802;
 			t = t / 680.0 - 0.935;
 			e = 1;
-			n = SIZEK;
+			n = ARRAY_SIZE(coefk);
 			coef = coefk;
 			break;
 		case R3L:
@@ -2565,7 +2319,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 24.0 - 0.908;
 			t = t / 650.0 - 0.989;
 			e = 4;
-			n = SIZEL;
+			n = ARRAY_SIZE(coefl);
 			coef = coefl;
 			break;
 		case R3M:
@@ -2573,7 +2327,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 23.0 - 1.000;
 			t = POW(t / 650.0 - 0.997, 0.25);
 			e = 1;
-			n = SIZEM;
+			n = ARRAY_SIZE(coefm);
 			coef = coefm;
 			break;
 		case R3N:
@@ -2581,7 +2335,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 23.0 - 0.976;
 			t = t / 650.0 - 0.997;
 			e = 1;
-			n = SIZEN;
+			n = ARRAY_SIZE(coefn);
 			coef = coefn;
 			break;
 		case R3O:
@@ -2589,7 +2343,7 @@ static double v_r3_pt(double p, double t)
 			p = sqrt(p / 23.0 - 0.974);
 			t = t / 650.0 - 0.996;
 			e = 1;
-			n = SIZEO;
+			n = ARRAY_SIZE(coefo);
 			coef = coefo;
 			break;
 		case R3P:
@@ -2597,7 +2351,7 @@ static double v_r3_pt(double p, double t)
 			p = sqrt(p / 23.0 - 0.972);
 			t = t / 650.0 - 0.997;
 			e = 1;
-			n = SIZEP;
+			n = ARRAY_SIZE(coefp);
 			coef = coefp;
 			break;
 		case R3Q:
@@ -2605,7 +2359,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 23.0 - 0.848;
 			t = t / 650.0 - 0.983;
 			e = 4;
-			n = SIZEQ;
+			n = ARRAY_SIZE(coefq);
 			coef = coefq;
 			break;
 		case R3R:
@@ -2613,7 +2367,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 23.0 - 0.874;
 			t = t / 650.0 - 0.982;
 			e = 1;
-			n = SIZER;
+			n = ARRAY_SIZE(coefr);
 			coef = coefr;
 			break;
 		case R3S:
@@ -2621,7 +2375,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 21.0 - 0.886;
 			t = t / 640.0 - 0.990;
 			e = 4;
-			n = SIZES;
+			n = ARRAY_SIZE(coefs);
 			coef = coefs;
 			break;
 		case R3T:
@@ -2629,7 +2383,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 20.0 - 0.803;
 			t = t / 650.0 - 1.020;
 			e = 1;
-			n = SIZET;
+			n = ARRAY_SIZE(coeft);
 			coef = coeft;
 			break;
 		case R3U:
@@ -2637,7 +2391,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 23.0 - 0.902;
 			t = t / 650.0 - 0.988;
 			e = 1;
-			n = SIZEU;
+			n = ARRAY_SIZE(coefu);
 			coef = coefu;
 			break;
 		case R3V:
@@ -2645,7 +2399,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 23.0 - 0.960;
 			t = t / 650.0 - 0.995;
 			e = 1;
-			n = SIZEV;
+			n = ARRAY_SIZE(coefv);
 			coef = coefv;
 			break;
 		case R3W:
@@ -2653,7 +2407,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 23.0 - 0.959;
 			t = t / 650.0 - 0.995;
 			e = 4;
-			n = SIZEW;
+			n = ARRAY_SIZE(coefw);
 			coef = coefw;
 			break;
 		case R3X:
@@ -2661,7 +2415,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 23.0 - 0.910;
 			t = t / 650.0 - 0.988;
 			e = 1;
-			n = SIZEX;
+			n = ARRAY_SIZE(coefx);
 			coef = coefx;
 			break;
 		case R3Y:
@@ -2669,7 +2423,7 @@ static double v_r3_pt(double p, double t)
 			p = p / 22.0 - 0.996;
 			t = t / 650.0 - 0.994;
 			e = 4;
-			n = SIZEY;
+			n = ARRAY_SIZE(coefy);
 			coef = coefy;
 			break;
 		case R3Z:
@@ -2677,40 +2431,15 @@ static double v_r3_pt(double p, double t)
 			p = p / 22.0 - 0.993;
 			t = t / 650.0 - 0.994;
 			e = 4;
-			n = SIZEZ;
+			n = ARRAY_SIZE(coefz);
 			coef = coefz;
 			break;
 		default:
 			assert(0);
+			return 0.0;
 	}
 
-	for (i = 0; i < n; ++i) {
-		if (i != 0) {
-			xi *= powint(p, coef[i].I - coef[i - 1].I);
-			//xj *= powint(t, coef[i].J - coef[i - 1].J);
-			xj = powint(t, coef[i].J);
-		} else {
-			xi = powint(p, coef[i].I);
-			xj = powint(t, coef[i].J);
-		}
-		ans += coef[i].n * xi * xj;
-	}
-
-	return (r3 != R3N ? powint(ans, e) : exp(ans)) * vs;
+	ans = sumpowij(p, t, coef, n);
+	return (r3 != R3N ? POWINT(ans, e) : exp(ans)) * vs;
 }
 
-#if 0
-#include <stdio.h>
-int main()
-{
-	iapws_phi gamma;
-	gamma.R = IF97_R;
-	phi_r3(IAPWS_RHOC, IAPWS_TC, &gamma);
-	printf("%.8e %.8e %.8e %.8e %.8e\n",
-			iapws_p(&gamma),
-			iapws_t(&gamma),
-			iapws_rho(&gamma),
-			iapws_s(&gamma),
-			iapws_h(&gamma));
-}
-#endif

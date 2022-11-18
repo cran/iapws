@@ -1,14 +1,14 @@
-\name{iapws95_sat}
-\alias{iapws95_sat}
+\name{heavy17_sat}
+\alias{heavy17_sat}
 \title{
-  IAPWS-95 Formulation in the Saturation Region
+  IAPWS-17 Formulation in the Saturation Region
 }
 \description{
-  Compute thermodynamic and transport properties of water and steam
-  along the saturated line according to the IAPWS formulation 1995.
+  Compute thermodynamic and transport properties of heavy water
+  along the saturated line according to the IAPWS formulation 2017.
 }
 \usage{
-iapws95_sat(what, p, t)
+heavy17_sat(what, p, t)
 }
 \arguments{
   \item{what}{
@@ -56,9 +56,8 @@ iapws95_sat(what, p, t)
 }
 \references{
   International Association for the Properties of Water and Steam,
-  IAPWS R6-95(2018), \emph{Revised Release on the IAPWS Formulation 1995
-  for the Thermodynamic Properties of Ordinary Water Substance
-  for General and Scientific Use.}
+  IAPWS R16-17(2018), \emph{Revised Release on the IAPWS Formulation 2017
+  for the Thermodynamic Properties of Heavy Water.}
 }
 \author{
   Jonathan Debove
@@ -68,12 +67,13 @@ iapws95_sat(what, p, t)
   than separately because most of the computation time is shared.
 }
 \examples{
-# IAPWS-95 Tab. 8
-tab <- iapws95_sat(c("p", "rho", "h", "s"), t = c(275, 450, 625))
+# IAPWS-17 Tab. 8
+M <- 20.027508  # g/mol
+tab <- heavy17_sat(c("p", "rho", "h", "s"), t = c(280, 450, 625))
 format(tab, scientific = TRUE, digits = 9)
 \dontshow{
 stopifnot(all.equal(tab[, "p", "gas", drop = FALSE],
-          array(c(0.698451167e-3, 0.932203564e0, 0.169082693e2),
+          array(c(0.823054058e-3, 0.921212105, 0.172118129e2),
                 c(3, 1, 1), dimnames = list(NULL, c("p"), c("gas"))),
           tolerance = 2e-9))
 }

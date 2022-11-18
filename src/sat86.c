@@ -16,7 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* International Association for the Properties of Water and Steam,
+/*
+ * International Association for the Properties of Water and Steam,
  * IAPWS SR1-86(1992), Revised Supplementary Release on Saturation of
  * Ordinary Water Substance
  */
@@ -24,48 +25,84 @@
 #include <math.h>
 
 #include "iapws.h"
+#include "nroot.h"
+#include "coef.h"
 #include "pow.h"
 
-static inline double sum6pow(const double x, const double a[], const int I[])
+static double sumpow6(const double x, const struct Ni coef[6])
 {
-	return  a[0] * POWINT(x, I[0]) + a[1] * POWINT(x, I[1]) +
-		a[2] * POWINT(x, I[2]) + a[3] * POWINT(x, I[3]) +
-		a[4] * POWINT(x, I[4]) + a[5] * POWINT(x, I[5]);
+	double ans = 0.0;
+	COEF_ITERATE1(coef, 6, x, ans += _ans_);
+	return ans;
+}
+
+static double sat_logpi(double theta)
+{
+	const struct Ni a[6] = {
+		{ 2,	-7.85951783 },
+		{ 3,	 1.84408259 },
+		{ 6,	-11.7866497 },
+		{ 7,	 22.6807411 },
+		{ 8,	-15.9618719 },
+		{ 15,	 1.80122502 },
+	};
+	return sumpow6(sqrt(1.0 - theta), a) / theta;
 }
 
 double sat86_p(double t)
 {
-	const int I[6] = { 2, 3, 6, 7, 8, 15 };
-	const double a[6] = {
-		-7.85951783,  1.84408259, -11.7866497,
-		 22.6807411, -15.9618719,  1.80122502,
-	};
-	double theta = t / IAPWS_TC;
 	if (t < IAPWS_TT || t > IAPWS_TC) return 0.0;
-	return exp(sum6pow(sqrt(1.0 - theta), a, I) / theta) * IAPWS_PC;
+	return exp(sat_logpi(t / IAPWS_TC)) * IAPWS_PC;
+}
+
+static void get_thetasat(double *theta, void *logpi, double *fx, double *dfx)
+{
+	double *lp = (double *)(logpi);
+	*fx = sat_logpi(*theta) - (*lp);
+}
+
+double sat86_t(double p)
+{
+	if (p < IAPWS_PT || p > IAPWS_PC) return 0.0;
+
+	struct nroot_control ctrl = nroot_default;
+
+	double logpi = log(p / IAPWS_PC);
+	double theta = 1.0 / (1.0 - 1.416488e-01 * logpi -
+			1.047873e-03 * POW2(logpi));
+	if (sroot(get_thetasat, &theta, &logpi, &ctrl) != NROOT_SUCCESS)
+		return 0.0;
+	theta *= IAPWS_TC;
+	if (theta > IAPWS_TC) theta = IAPWS_TC;
+	else if (theta < IAPWS_TT) theta = IAPWS_TT;
+	return theta;
 }
 
 double sat86_rhol(double t)
 {
-	const int I[6] = { 1, 2, 5, 16, 43, 110 };
-	const double b[6] = {
-		 1.99274064,  1.09965342, -0.510839303,
-		-1.75493479, -45.5170352, -6.74694450e5,
+	const struct Ni b[6] = {
+		{ 1,	 1.99274064	},
+		{ 2,	 1.09965342	},
+		{ 5,	-0.510839303	},
+		{ 16,	-1.75493479	},
+		{ 43,	-45.5170352	},
+		{ 110,	-6.74694450e5	},
 	};
-	double theta = t / IAPWS_TC;
 	if (t < IAPWS_TT || t > IAPWS_TC) return 0.0;
-	return (sum6pow(cbrt(1.0 - theta), b, I) + 1.0) * IAPWS_RHOC;
+	return (sumpow6(cbrt(1.0 - t / IAPWS_TC), b) + 1.0) * IAPWS_RHOC;
 }
 
 double sat86_rhog(double t)
 {
-	const int I[6] = { 2, 4, 8, 18, 37, 71 };
-	const double c[6] = {
-		-2.03150240, -2.68302940, -5.38626492,
-		-17.2991605, -44.7586581, -63.9201063,
+	const struct Ni c[6] = {
+		{ 2,	-2.03150240 },
+		{ 4,	-2.68302940 },
+		{ 8,	-5.38626492 },
+		{ 18,	-17.2991605 },
+		{ 37,	-44.7586581 },
+		{ 71,	-63.9201063 },
 	};
-	double theta = t / IAPWS_TC;
 	if (t < IAPWS_TT || t > IAPWS_TC) return 0.0;
-	return exp(sum6pow(POW(1.0 - theta, 1.0 / 6.0), c, I)) * IAPWS_RHOC;
+	return exp(sumpow6(POW(1.0 - t / IAPWS_TC, 1.0 / 6.0), c)) * IAPWS_RHOC;
 }
 

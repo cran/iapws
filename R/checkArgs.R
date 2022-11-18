@@ -40,8 +40,7 @@
 		       w  = 10L, rho = 11L,
 		       alpha = 12L, beta = 13L,
 		       kappat = 14L,
-		       eta = 15L, lambda = 16L,
-		       sigma = 17L, epsilon = 18L)
+		       eta = 15L, lambda = 16L)
 
 .check_what <- function(what)
 {
@@ -52,5 +51,22 @@
 		stop(.call, ": invalid 'what'", call. = FALSE)
 	}
 	.IAPWS_PROPERTIES[what]
+}
+
+.IAPWS_ICE <- c(Ih  = 1L,
+		III = 3L,
+		V   = 5L,
+		VI  = 6L,
+		VII = 7L)
+
+.check_ice <- function(ice)
+{
+	.call <- format(sys.call(sys.parent()))
+	if (!is.character(ice)) {
+		stop(.call, ": 'ice' is not a character vector", call. = FALSE)
+	} else if (!all(ice %in% names(.IAPWS_ICE))) {
+		stop(.call, ": invalid 'ice'", call. = FALSE)
+	}
+	.IAPWS_ICE[ice]
 }
 

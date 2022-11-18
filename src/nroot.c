@@ -33,21 +33,22 @@
 
 #include "nroot.h"
 
-nroot_control nroot_default = {
+struct nroot_control nroot_default = {
 	.trace = 0,
 	.maxit = 100,
 	.abstol = 1e-9,
 	.reltol = 1e-9
 };
 
-void nroot_log(const nroot_control *ctrl)
+void nroot_log(const struct nroot_control *ctrl)
 {
 	if (ctrl->trace > 0)
 		REprintf("nroot: iter=%d epsf=%.8e epsx=%.8e\n",
 			ctrl->maxit, ctrl->abstol, ctrl->reltol);
 }
 
-int nroot1(root_fun fun, double *x, void *prms, nroot_control *ctrl)
+enum nroot_exit nroot1(nroot_fun fun, double *x, void *prms,
+		struct nroot_control *ctrl)
 {
 	assert(ctrl != &nroot_default);
 	const double tolf = ctrl->abstol;
@@ -56,22 +57,23 @@ int nroot1(root_fun fun, double *x, void *prms, nroot_control *ctrl)
 	while (ctrl->maxit--) {
 		fun(x, prms, &fx, &dfx);
 		ctrl->abstol = fabs(fx);
-		if (ctrl->abstol <= tolf) return 0;
+		if (ctrl->abstol <= tolf) return NROOT_SUCCESS;
 
-		if (dfx == 0.0) return -2;
+		if (dfx == 0.0) return NROOT_ZERODET;
 
 		dx = -fx / dfx;
 		ctrl->reltol = fabs(dx) / fabs(*x);
-		if (ctrl->reltol <= tolx) return 0;
+		if (ctrl->reltol <= tolx) return NROOT_SUCCESS;
 
 		nroot_log(ctrl);
 
 		*x += dx;
 	}
-	return -1;
+	return NROOT_MAXITER;
 }
 
-int nroot2(root_fun fun, double *x, void *prms, nroot_control *ctrl)
+enum nroot_exit nroot2(nroot_fun fun, double *x, void *prms,
+		struct nroot_control *ctrl)
 {
 	assert(ctrl != &nroot_default);
 	const double tolf = ctrl->abstol;
@@ -82,27 +84,28 @@ int nroot2(root_fun fun, double *x, void *prms, nroot_control *ctrl)
 	while (ctrl->maxit--) {
 		fun(x, prms, fx, dfx);
 		ctrl->abstol = fabs(fx[0]) + fabs(fx[1]);
-		if (ctrl->abstol <= tolf) return 0;
+		if (ctrl->abstol <= tolf) return NROOT_SUCCESS;
 
 		det = dfx[0] * dfx[3] - dfx[2] * dfx[1];
-		if (det == 0.0) return -2;
+		if (det == 0.0) return NROOT_ZERODET;
 
 		det = 1.0 / det;
 		dx[0] = -(dfx[3] * fx[0] - dfx[2] * fx[1]) * det;
 		dx[1] = +(dfx[1] * fx[0] - dfx[0] * fx[1]) * det;
 		ctrl->reltol = (fabs(dx[0]) + fabs(dx[1])) /
 			(fabs(x[0]) + fabs(x[1]));
-		if (ctrl->reltol <= tolx) return 0;
+		if (ctrl->reltol <= tolx) return NROOT_SUCCESS;
 
 		nroot_log(ctrl);
 
 		x[0] += dx[0];
 		x[1] += dx[1];
 	}
-	return -1;
+	return NROOT_MAXITER;
 }
 
-int nrootn(int n, root_fun fun, double *x, void *prms, nroot_control *ctrl)
+enum nroot_exit nrootn(int n, nroot_fun fun, double *x, void *prms,
+		struct nroot_control *ctrl)
 {
 	assert(ctrl != &nroot_default);
 	const double tolf = ctrl->abstol;
@@ -123,25 +126,26 @@ int nrootn(int n, root_fun fun, double *x, void *prms, nroot_control *ctrl)
 	while (ctrl->maxit--) {
 		fun(x, prms, fx, dfx);
 		ctrl->abstol = F77_NAME(dasum)(&n, fx, &i1);
-		if (ctrl->abstol <= tolf) return 0;
+		if (ctrl->abstol <= tolf) return NROOT_SUCCESS;
 
 		F77_NAME(dscal)(&n, &dm1, fx, &i1);
 		F77_NAME(dgesv)(&n, &i1, dfx, &n, ipiv, fx, &n, &info);
-		if (info != 0) return -2;
+		if (info != 0) return NROOT_ZERODET;
 
 		ctrl->reltol = F77_NAME(dasum)(&n, fx, &i1) /
 			F77_NAME(dasum)(&n, x, &i1);
-		if (ctrl->reltol <= tolx) return 0;
+		if (ctrl->reltol <= tolx) return NROOT_SUCCESS;
 
 		nroot_log(ctrl);
 
 		F77_NAME(daxpy)(&n, &d1, fx, &i1, x, &i1);
 	}
 
-	return -1;
+	return NROOT_MAXITER;
 }
 
-int sroot(root_fun fun, double *x, void *prms, nroot_control *ctrl)
+enum nroot_exit sroot(nroot_fun fun, double *x, void *prms,
+		struct nroot_control *ctrl)
 {
 	assert(ctrl != &nroot_default);
 	const double tolf = ctrl->abstol;
@@ -150,27 +154,27 @@ int sroot(root_fun fun, double *x, void *prms, nroot_control *ctrl)
 
 	fun(x, prms, &fx0, &dfx);
 	ctrl->abstol = fabs(fx0);
-	if (ctrl->abstol <= tolf) return 0;
+	if (ctrl->abstol <= tolf) return NROOT_SUCCESS;
 	dx = tolx;
 	*x += dx;
 
 	while (ctrl->maxit--) {
 		fun(x, prms, &fx, &dfx);
 		ctrl->abstol = fabs(fx);
-		if (ctrl->abstol <= tolf) return 0;
+		if (ctrl->abstol <= tolf) return NROOT_SUCCESS;
 
 		dfx = fx - fx0;
-		if (dfx == 0.0) return -2;
+		if (dfx == 0.0) return NROOT_ZERODET;
 
 		dx *= -fx / dfx;
 		ctrl->reltol = fabs(dx) / fabs(*x);
-		if (ctrl->reltol <= tolx) return 0;
+		if (ctrl->reltol <= tolx) return NROOT_SUCCESS;
 
 		nroot_log(ctrl);
 
 		*x += dx;
 		fx0 = fx;
 	}
-	return -1;
+	return NROOT_MAXITER;
 }
 

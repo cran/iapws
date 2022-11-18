@@ -16,7 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* International Association for the Properties of Water and Steam,
+/*
+ * International Association for the Properties of Water and Steam,
  * IAPWS R6-95(2018), Revised Release on the IAPWS Formulation 1995 for the
  * Thermodynamic Properties of Ordinary Water Substance for General and
  * Scientific Use (2018)
@@ -28,104 +29,75 @@
 #include "iapws95.h"
 #include "if97.h"
 #include "sat86.h"
-#include "melt08.h"
+#include "melt.h"
 #include "nroot.h"
+#include "phi.h"
 #include "pow.h"
 
-enum {
-	SIZE0 = 8,
-	SIZE1 = 7,
-	SIZE2 = 44,
-	SIZE3 = 3,
-	SIZE4 = 2,
+static const struct iapws_phi_coef0 coef0[3 + 5] = {
+	{ -8.3204464837497,	0.0 },
+	{  6.6832105275932,	0.0 },
+	{  3.00632,		0.0 },
+	{  0.012436,	 1.28728967 },
+	{  0.97315,	 3.53734222 },
+	{  1.2795,	 7.74073708 },
+	{  0.96956,	 9.24437796 },
+	{  0.24873,	 27.5075105 },
 };
-
-static const struct {
-	double n;
-	double gamma;
-} coef0[SIZE0] = {
-	{ -8.3204464837497,  0.00000000 },
-	{  6.6832105275932,  0.00000000 },
-	{  3.0063200000000,  0.00000000 },
-	{  0.0124360000000,  1.28728967 }, 
-	{  0.9731500000000,  3.53734222 },
-	{  1.2795000000000,  7.74073708 },
-	{  0.9695600000000,  9.24437796 },
-	{  0.2487300000000, 27.50751050 },
+static const struct iapws_phi_coef1 coef1[7 + 44] = {
+	{ 0,	1,	-0.5,	 0.12533547935523e-1 * M_E },	
+	{ 0,	1,	0.875,	 0.78957634722828e1  * M_E },	
+	{ 0,	1,	1,	-0.87803203303561e1  * M_E },	
+	{ 0,	2,	0.5,	 0.31802509345418    * M_E },	
+	{ 0,	2,	0.75,	-0.26145533859358    * M_E },	
+	{ 0,	3,	0.375,	-0.78199751687981e-2 * M_E },	
+	{ 0,	4,	1,	 0.88089493102134e-2 * M_E },	
+	{ 1,	1,	4,	-0.66856572307965	},	
+	{ 1,	1,	6,	 0.20433810950965	},	
+	{ 1,	1,	12,	-0.66212605039687e-4	},	
+	{ 1,	2,	1,	-0.19232721156002	},	
+	{ 1,	2,	5,	-0.25709043003438	},	
+	{ 1,	3,	4,	 0.16074868486251	},	
+	{ 1,	4,	2,	-0.40092828925807e-1	},	
+	{ 1,	4,	13,	 0.39343422603254e-6	},	
+	{ 1,	5,	9,	-0.75941377088144e-5	},	
+	{ 1,	7,	3,	 0.56250979351888e-3	},	
+	{ 1,	9,	4,	-0.15608652257135e-4	},	
+	{ 1,	10,	11,	 0.11537996422951e-8	},	
+	{ 1,	11,	4,	 0.36582165144204e-6	},	
+	{ 1,	13,	13,	-0.13251180074668e-11	},	
+	{ 1,	15,	1,	-0.62639586912454e-9	},	
+	{ 2,	1,	7,	-0.10793600908932	},	
+	{ 2,	2,	1,	 0.17611491008752e-1	},	
+	{ 2,	2,	9,	 0.22132295167546	},	
+	{ 2,	2,	10,	-0.40247669763528	},	
+	{ 2,	3,	10,	 0.58083399985759	},	
+	{ 2,	4,	3,	 0.49969146990806e-2	},	
+	{ 2,	4,	7,	-0.31358700712549e-1	},	
+	{ 2,	4,	10,	-0.74315929710341	},	
+	{ 2,	5,	10,	 0.47807329915480	},	
+	{ 2,	6,	6,	 0.20527940895948e-1	},	
+	{ 2,	6,	10,	-0.13636435110343	},	
+	{ 2,	7,	10,	 0.14180634400617e-1	},	
+	{ 2,	9,	1,	 0.83326504880713e-2	},	
+	{ 2,	9,	2,	-0.29052336009585e-1	},	
+	{ 2,	9,	3,	 0.38615085574206e-1	},	
+	{ 2,	9,	4,	-0.20393486513704e-1	},	
+	{ 2,	9,	8,	-0.16554050063734e-2	},	
+	{ 2,	10,	6,	 0.19955571979541e-2	},	
+	{ 2,	10,	9,	 0.15870308324157e-3	},	
+	{ 2,	12,	8,	-0.16388568342530e-4	},	
+	{ 3,	3,	16,	 0.43613615723811e-1	},	
+	{ 3,	4,	22,	 0.34994005463765e-1	},	
+	{ 3,	4,	23,	-0.76788197844621e-1	},	
+	{ 3,	5,	23,	 0.22446277332006e-1	},	
+	{ 4,	14,	10,	-0.62689710414685e-4	},	
+	{ 6,	3,	50,	-0.55711118565645e-9	},	
+	{ 6,	6,	44,	-0.19905718354408	},	
+	{ 6,	6,	46,	 0.31777497330738	},	
+	{ 6,	6,	50,	-0.11841182425981	},	
 };
-static const struct {
-	int d;
-	double t;
-	double n;
-} coef1[SIZE1] = {
-	{ 1, -0.5,	 0.12533547935523e-1	},
-	{ 1,  0.875,	 0.78957634722828e1	},
-	{ 1,  1.0,	-0.87803203303561e1	},
-	{ 2,  0.5,	 0.31802509345418	},
-	{ 2,  0.75,	-0.26145533859358	},
-	{ 3,  0.375,	-0.78199751687981e-2	},
-	{ 4,  1.0,	 0.88089493102134e-2	},
-};
-static const struct {
-	int c;
-	int d;
-	int t;
-	double n;
-} coef2[SIZE2] = {
-	{ 1,  1,  4,	-0.66856572307965	},
-	{ 1,  1,  6,	 0.20433810950965	},
-	{ 1,  1, 12,	-0.66212605039687e-4	},
-	{ 1,  2,  1,	-0.19232721156002	},
-	{ 1,  2,  5,	-0.25709043003438	},
-	{ 1,  3,  4,	 0.16074868486251	},
-	{ 1,  4,  2,	-0.40092828925807e-1	},
-	{ 1,  4, 13,	 0.39343422603254e-6	},
-	{ 1,  5,  9,	-0.75941377088144e-5	},
-	{ 1,  7,  3,	 0.56250979351888e-3	},
-	{ 1,  9,  4,	-0.15608652257135e-4	},
-	{ 1, 10, 11,	 0.11537996422951e-8	},
-	{ 1, 11,  4,	 0.36582165144204e-6	},
-	{ 1, 13, 13,	-0.13251180074668e-11	},
-	{ 1, 15,  1,	-0.62639586912454e-9	},
-	{ 2,  1,  7,	-0.10793600908932	},
-	{ 2,  2,  1,	 0.17611491008752e-1	},
-	{ 2,  2,  9,	 0.22132295167546	},
-	{ 2,  2, 10,	-0.40247669763528	},
-	{ 2,  3, 10,	 0.58083399985759	},
-	{ 2,  4,  3,	 0.49969146990806e-2	},
-	{ 2,  4,  7,	-0.31358700712549e-1	},
-	{ 2,  4, 10,	-0.74315929710341	},
-	{ 2,  5, 10,	 0.47807329915480	},
-	{ 2,  6,  6,	 0.20527940895948e-1	},
-	{ 2,  6, 10,	-0.13636435110343	},
-	{ 2,  7, 10,	 0.14180634400617e-1	},
-	{ 2,  9,  1,	 0.83326504880713e-2	},
-	{ 2,  9,  2,	-0.29052336009585e-1	},
-	{ 2,  9,  3,	 0.38615085574206e-1	},
-	{ 2,  9,  4,	-0.20393486513704e-1	},
-	{ 2,  9,  8,	-0.16554050063734e-2	},
-	{ 2, 10,  6,	 0.19955571979541e-2	},
-	{ 2, 10,  9,	 0.15870308324157e-3	},
-	{ 2, 12,  8,	-0.16388568342530e-4	},
-	{ 3,  3, 16,	 0.43613615723811e-1	},
-	{ 3,  4, 22,	 0.34994005463765e-1	},
-	{ 3,  4, 23,	-0.76788197844621e-1	},
-	{ 3,  5, 23,	 0.22446277332006e-1	},
-	{ 4, 14, 10,	-0.62689710414685e-4	},
-	{ 6,  3, 50,	-0.55711118565645e-9	},
-	{ 6,  6, 44,	-0.19905718354408	},
-	{ 6,  6, 46,	 0.31777497330738	},
-	{ 6,  6, 50,	-0.11841182425981	},
-};
-static const struct {
-	int d;
-	int t;
-	double n;
-	double alpha;
-	double beta;
-	double gamma;
-	double eps;
-} coef3[SIZE3] = {
+static const struct iapws_phi_coef2 coef2[3] = {
 	{ 3, 0, -0.31306260323435e2, 20.0, 150.0, 1.21, 1.0 },
 	{ 3, 1,  0.31546140237781e2, 20.0, 150.0, 1.21, 1.0 },
 	{ 3, 4, -0.25213154341695e4, 20.0, 250.0, 1.25, 1.0 },
@@ -139,22 +111,23 @@ static const struct {
 	double D;
 	double A;
 	double beta;
-} coef4[SIZE4] = {
+} coef3[2] = {
 	{ 3.5, 0.85, 0.2, -0.14874640856724, 28.0, 700.0, 0.32, 0.3 },
 	{ 3.5, 0.95, 0.2,  0.31806110878444, 32.0, 800.0, 0.32, 0.3 },
 };
 
-static void calc_Deltab(int i, double delta, double tau, iapws_phi *ans)
+static void calc_Deltab(int i, double delta, double tau, struct iapws_phi *ans)
 {
 	assert(delta != 1.0 || tau != 1.0);
-	double dm1 = delta - 1.0;
-	double invbeta = 1.0 / coef4[i].beta;
+	const double dm1 = delta - 1.0;
+	const double dm2 = POW2(dm1);
+	const double invbeta = 1.0 / coef3[i].beta;
 	double Adb, Bda, Db;
-	iapws_phi theta, Delta;
+	struct iapws_phi theta, Delta;
 
 	/* theta */
-	Adb = POW(dm1 * dm1, invbeta * 0.5 - 1.0) * coef4[i].A;
-	theta.d00 = Adb * POW2(dm1) + 1.0 - tau;
+	Adb = POW(dm2, invbeta * 0.5 - 1.0) * coef3[i].A;
+	theta.d00 = Adb * dm2 + 1.0 - tau;
 	theta.d10 = Adb * dm1 * invbeta;
 	theta.d20 = Adb * invbeta * (invbeta - 1.0);
 	theta.d01 = -1.0;
@@ -162,10 +135,10 @@ static void calc_Deltab(int i, double delta, double tau, iapws_phi *ans)
 	theta.d11 = 0.0;
 
 	/* Delta */
-	Bda = POW(dm1 * dm1, coef4[i].a - 1.0) * coef4[i].B;
-	Delta.d00 = Bda * POW2(dm1) + POW2(theta.d00);
-	Delta.d10 = (Bda * dm1 * coef4[i].a + theta.d00 * theta.d10) * 2.0;
-	Delta.d20 = (Bda * coef4[i].a * (coef4[i].a * 2.0 - 1.0) +
+	Bda = POW(dm2, coef3[i].a - 1.0) * coef3[i].B;
+	Delta.d00 = Bda * dm2 + POW2(theta.d00);
+	Delta.d10 = (Bda * dm1 * coef3[i].a + theta.d00 * theta.d10) * 2.0;
+	Delta.d20 = (Bda * coef3[i].a * (coef3[i].a * 2.0 - 1.0) +
 			POW2(theta.d10) + theta.d00 * theta.d20) * 2.0;
 	Delta.d01 = theta.d00 * (-2.0);
 	Delta.d02 = 2.0;
@@ -173,119 +146,56 @@ static void calc_Deltab(int i, double delta, double tau, iapws_phi *ans)
 
 	/* Deltab */
 	assert(Delta.d00 > 0);  /* FIXME */
-	Db = POW(Delta.d00, coef4[i].b - 2.0);
+	Db = POW(Delta.d00, coef3[i].b - 2.0);
 	ans->d00 = Db * POW2(Delta.d00);
-	ans->d10 = Db * Delta.d00 * Delta.d10 * coef4[i].b;
-	ans->d20 = Db * (POW2(Delta.d10) * (coef4[i].b - 1.0) +
-			Delta.d00 * Delta.d20) * coef4[i].b;
-	ans->d01 = Db * Delta.d00 * Delta.d01 * coef4[i].b;
-	ans->d02 = Db * (POW2(Delta.d01) * (coef4[i].b - 1.0) +
-			Delta.d00 * Delta.d02) * coef4[i].b;
+	ans->d10 = Db * Delta.d00 * Delta.d10 * coef3[i].b;
+	ans->d20 = Db * (POW2(Delta.d10) * (coef3[i].b - 1.0) +
+			Delta.d00 * Delta.d20) * coef3[i].b;
+	ans->d01 = Db * Delta.d00 * Delta.d01 * coef3[i].b;
+	ans->d02 = Db * (POW2(Delta.d01) * (coef3[i].b - 1.0) +
+			Delta.d00 * Delta.d02) * coef3[i].b;
 	ans->d11 = Db * (Delta.d00 * Delta.d11 + Delta.d10 * Delta.d01 *
-			(coef4[i].b - 1.0)) * coef4[i].b;
+			(coef3[i].b - 1.0)) * coef3[i].b;
 }
 
-static void calc_psi(int i, double delta, double tau, iapws_phi *psi)
+static void calc_psi(int i, double delta, double tau, struct iapws_phi *psi)
 {
-	double dm1 = delta - 1.0;
-	double tm1 = tau - 1.0;
-	double psi0 = exp(-coef4[i].C * POW2(dm1) - coef4[i].D * POW2(tm1));
+	const double dm1 = delta - 1.0;
+	const double tm1 = tau - 1.0;
+	const double dm2 = POW2(dm1);
+	const double tm2 = POW2(tm1);
+	const double psi0 = exp(-coef3[i].C * dm2 - coef3[i].D * tm2);
 
 	psi->d00 = psi0;
-	psi->d10 = psi0 * dm1 * coef4[i].C * (-2.0);
-	psi->d20 = psi0 * (POW2(dm1) * coef4[i].C * 4.0 - 2.0) * coef4[i].C;
-	psi->d01 = psi0 * tm1 * coef4[i].D * (-2.0);                       
-	psi->d02 = psi0 * (POW2(tm1) * coef4[i].D * 4.0 - 2.0) * coef4[i].D;
-	psi->d11 = psi0 * dm1 * tm1 * coef4[i].C * coef4[i].D * 4.0;
+	psi->d10 = psi0 * dm1 * coef3[i].C * (-2.0);
+	psi->d20 = psi0 * (dm2 * coef3[i].C * 4.0 - 2.0) * coef3[i].C;
+	psi->d01 = psi0 * tm1 * coef3[i].D * (-2.0);                       
+	psi->d02 = psi0 * (tm2 * coef3[i].D * 4.0 - 2.0) * coef3[i].D;
+	psi->d11 = psi0 * dm1 * tm1 * coef3[i].C * coef3[i].D * 4.0;
 }
 
-void iapws95_phi(double rho, double t, iapws_phi *phi)
+void iapws95_phi(double rho, double t, struct iapws_phi *phi)
 {
 	int i;
 	const double delta = rho / IAPWS_RHOC;
 	const double tau = IAPWS_TC / t;
-	double xd, xt, xn, egt, dc, tc;
-	iapws_phi Db, psi;
+	double xn;
+	struct iapws_phi Db, psi;
 
 	phi->type = IAPWS_PHI;
 	phi->rho = rho;
 	phi->t = t;
 	phi->R = IAPWS95_R;
 
-	/* phi0 */
-	phi->d00 = log(delta) + coef0[0].n + coef0[1].n * tau + coef0[2].n * log(tau);
-	phi->d10 = 1.0;
-	phi->d01 = coef0[1].n * tau + coef0[2].n;
-	phi->d11 = 0.0;
-	phi->d20 = -1.0;
-	phi->d02 = -coef0[2].n;
-	for (i = 3; i < SIZE0; ++i) {
-		egt = expm1(-coef0[i].gamma * tau);
-		phi->d00 += coef0[i].n * log(-egt);
-		phi->d01 -= coef0[i].n * coef0[i].gamma * (tau + tau / egt);
-		phi->d02 -= coef0[i].n * POW2(coef0[i].gamma * tau) *
-			(egt + 1) / POW2(egt);
-	}
+	iapws_phi(delta, tau, coef0, ARRAY_SIZE(coef0),
+			coef1, ARRAY_SIZE(coef1),
+			coef2, ARRAY_SIZE(coef2), phi);
 
-	/* phir */
-	for (i = 0; i < SIZE1; ++i) {
-		xn = coef1[i].n * powint(delta, coef1[i].d) *
-			POW(tau, coef1[i].t);
-		phi->d00 += xn;
-		phi->d10 += xn * coef1[i].d; 
-		phi->d01 += xn * coef1[i].t;
-		phi->d11 += xn * coef1[i].d * coef1[i].t;
-		phi->d20 += xn * coef1[i].d * (coef1[i].d - 1);
-		phi->d02 += xn * coef1[i].t * (coef1[i].t - 1);
-	}
-	for (i = 0; i < SIZE2; ++i) {
-		if (i != 0) {
-			dc *= powint(delta, coef2[i].c - coef2[i - 1].c);
-			xd *= powint(delta, coef2[i].d - coef2[i - 1].d);
-			xt *= powint(tau, coef2[i].t - coef2[i - 1].t);
-		} else {
-			dc = powint(delta, coef2[i].c);
-			xd = powint(delta, coef2[i].d);
-			xt = powint(tau, coef2[i].t);
-		}
-		xn = coef2[i].n * exp(-dc) * xd * xt;
-		phi->d00 += xn;
-		phi->d10 += xn * (coef2[i].d - coef2[i].c * dc);
-		phi->d01 += xn * coef2[i].t;
-		phi->d11 += xn * (coef2[i].d - coef2[i].c * dc) * coef2[i].t;
-		phi->d20 += xn * ((coef2[i].d - coef2[i].c * dc) *
-				(coef2[i].d - coef2[i].c * dc - 1) -
-				coef2[i].c * coef2[i].c * dc);
-		phi->d02 += xn * coef2[i].t * (coef2[i].t - 1);
-	}
-	for (i = 0; i < SIZE3; ++i) {
-		if (i != 0) {
-			xd *= powint(delta, coef3[i].d - coef3[i - 1].d);
-			xt *= powint(tau, coef3[i].t - coef3[i - 1].t);
-		} else {
-			xd = powint(delta, coef3[i].d);
-			xt = powint(tau, coef3[i].t);
-		}
-		dc = delta - coef3[i].eps;
-		tc = tau - coef3[i].gamma;
-		xn = coef3[i].n * xd * xt *
-			exp(-coef3[i].alpha * dc * dc
-					-coef3[i].beta * tc * tc);
-		phi->d00 += xn;
-		phi->d10 += xn * (coef3[i].d - delta * 2 * coef3[i].alpha * dc);
-		phi->d01 += xn * (coef3[i].t - tau * 2 * coef3[i].beta * tc);
-		phi->d11 += xn * (coef3[i].d - delta * 2 * coef3[i].alpha * dc) *
-			(coef3[i].t - tau * 2 * coef3[i].beta * tc);
-		phi->d20 += xn * (POW2(coef3[i].d - 2 * coef3[i].alpha * delta * dc) -
-				coef3[i].d - 2 * coef3[i].alpha * POW2(delta));
-		phi->d02 += xn * (POW2(coef3[i].t - 2 * coef3[i].beta * tau * tc) -
-				coef3[i].t - 2 * coef3[i].beta * POW2(tau));
-	}
 	if (delta != 1.0 || tau != 1.0) {  /* FIXME not totally valid */
-		for (i = 0; i < SIZE4; ++i) {
+		for (i = 0; i < ARRAY_SIZE(coef3); ++i) {
 			calc_Deltab(i, delta, tau, &Db);
 			calc_psi(i, delta, tau, &psi);
-			xn = coef4[i].n * delta;
+			xn = coef3[i].n * delta;
 			phi->d00 += xn * Db.d00 * psi.d00;
 			phi->d10 += xn * (Db.d00 * (psi.d00 + psi.d10 * delta) +
 					Db.d10 * psi.d00 * delta);
@@ -307,7 +217,8 @@ void iapws95_phi(double rho, double t, iapws_phi *phi)
 #define PEPS	1.0001
 #define REPS	1.01
 
-int iapws95_phi_rhot(double rho, double t, iapws_state_id state, iapws_phi *phi)
+int iapws95_phi_rhot(double rho, double t, enum iapws_state state,
+		struct iapws_phi *phi)
 {
 	switch (state) {
 		case IAPWS_LIQUID:
@@ -321,62 +232,46 @@ int iapws95_phi_rhot(double rho, double t, iapws_state_id state, iapws_phi *phi)
 	assert(0);
 }
 
-static void get_phi_pt(double *rho, void *xphi, double *p, double *dp)
+int iapws95_phi_pt(double p, double t, enum iapws_state state,
+		struct iapws_phi *phi)
 {
-	iapws_phi *phi = (iapws_phi *)(xphi);
-	iapws95_phi(*rho, phi->t, phi);
-	double fact = phi->R * phi->t * 1e-3;
-	*p = phi->d10 * (*rho) * fact - phi->p;
-	*dp = (phi->d10 * 2.0 + phi->d20) * fact;
-}
-
-int iapws95_phi_pt(double p, double t, iapws_state_id state, iapws_phi *phi)
-{
-	nroot_control ctrl = nroot_default;
+	struct nroot_control ctrl = nroot_default;
 
 	/* Find suitable start value for rho */
-	/* May be more effective if test t0 before p0 */
 	double rho;
-	double p0 = p <= 100.0 ? p : 100.0;
-	double t0 = t >= 273.15 ? t : 273.15;
-	if (p0 <= 50.0) {
-		if (t0 > 2273.15) t0 = 2273.15;
+	if (if97_gamma_pt(p, t, state, phi) == 0) {
+		rho = iapws_rho(phi);
+		if (state == IAPWS_LIQUID) {
+			rho *= REPS;
+		} else if (state == IAPWS_GAS) {
+			rho /= REPS;
+		}
 	} else {
-		if (t0 > 1073.15) t0 = 1073.15;
-	}
-	if (if97_gamma_pt(p0, t0, state, phi) != 0) return -10;
-	rho = iapws_rho(phi);
-	if (state == IAPWS_LIQUID) {
-		rho *= REPS;
-	} else if (state == IAPWS_GAS) {
-		rho /= REPS;
+		if (state == IAPWS_LIQUID) {
+			/* Rackett equation */
+			rho = (IAPWS_PC * 1.0e3) / (IAPWS_TC * IAPWS95_R);
+			rho *= POW(IAPWS_RHOC / rho, 1.0 +
+					POW(fabs(1.0 - t / IAPWS_TC), 2.0 / 7.0));
+		} else if (state == IAPWS_GAS) {
+			/* Ideal gas */
+			rho = (p * 1.0e3) / (t * IAPWS95_R);
+		} else if (state == IAPWS_CRIT) {
+			/* Good enough default value */
+			rho = IAPWS_RHOC * 2.0;
+		} else {
+			return -10;
+		}
 	}
 
 	phi->p = p;
 	phi->t = t;
-	return nroot1(get_phi_pt, &rho, phi, &ctrl);
+	struct iapws_phi_call call = { iapws95_phi, phi };
+	return nroot1(get_phi_pt, &rho, &call, &ctrl);
 }
 
-static void get_phi_ph(double *rhot, void *xphi, double *ph, double *dph)
+int iapws95_phi_ph(double p, double h, struct iapws_phi *phi)
 {
-	double rho = rhot[0];
-	double t = rhot[1];
-
-	iapws_phi *phi = (iapws_phi *)(xphi);
-	iapws95_phi(rho, t, phi);
-
-	ph[0] = phi->d10 * rho * phi->R * t * 1e-3 - phi->p;
-	ph[1] = (phi->d10 + phi->d01) * phi->R * t - phi->h;
-
-	dph[0] = (phi->d10 * 2.0 + phi->d20) * phi->R * t * 1e-3;
-	dph[1] = (phi->d10 + phi->d20 + phi->d11) / rho * phi->R * t;
-	dph[2] = (phi->d10 - phi->d11) * rho * phi->R * 1e-3;
-	dph[3] = (phi->d10 - phi->d11 - phi->d02) * phi->R;
-}
-
-int iapws95_phi_ph(double p, double h, iapws_phi *phi)
-{
-	nroot_control ctrl = nroot_default;
+	struct nroot_control ctrl = nroot_default;
 
 	/* Find suitable start value for rho, t */
 	double rhot[2];
@@ -390,84 +285,52 @@ int iapws95_phi_ph(double p, double h, iapws_phi *phi)
 
 	phi->p = p;
 	phi->h = h;
-	return nroot2(get_phi_ph, rhot, phi, &ctrl);
+	struct iapws_phi_call call = { iapws95_phi, phi };
+	return nroot2(get_phi_ph, rhot, &call, &ctrl);
 }
 
-static void get_sat_t(double *x, void *xphi, double *fx, double *dfx)
+int iapws95_sat_t(double t, struct iapws_phi *phil, struct iapws_phi *phig)
 {
-	double rhol = x[0];
-	double rhog = x[1];
+	struct nroot_control ctrl = nroot_default;
 
-	iapws_phi *phil = *((iapws_phi **)(xphi));
-	iapws_phi *phig = *((iapws_phi **)(xphi) + 1);
-	iapws95_phi(rhol, phil->t, phil);
-	iapws95_phi(rhog, phig->t, phig);
-
-	fx[0] = phil->d10 * rhol - phig->d10 * rhog;
-	fx[1] = phil->d00 + phil->d10 - phig->d00 - phig->d10;
-
-	dfx[0] = (phil->d10 * 2.0 + phil->d20);
-	dfx[1] = dfx[0] / rhol;
-	dfx[2] = -(phig->d10 * 2.0 + phig->d20);
-	dfx[3] = dfx[2] / rhog;
-}
-
-int iapws95_sat_t(double t, iapws_phi *phil, iapws_phi *phig)
-{
-	nroot_control ctrl = nroot_default;
-
-	iapws_phi *phi[2] = { phil, phig };
 	double p = if97_psat(t);
 	if (p == 0.0) return -1;  /* test if outside of saturation line */
 	if (if97_gamma_pt(p, t, IAPWS_LIQUID, phil) != 0) return -11;
 	if (if97_gamma_pt(p, t, IAPWS_GAS, phig) != 0) return -12;
 	double x[2] = { iapws_rho(phil) * REPS, iapws_rho(phig) / REPS };
-	return nroot2(get_sat_t, x, phi, &ctrl);
+
+	//phil->t = t;
+	//phig->t = t;
+	struct iapws_phi_call call[2] = {
+		{ iapws95_phi, phil },
+		{ iapws95_phi, phig },
+	};
+	return nroot2(get_sat_t, x, call, &ctrl);
 }
 
-static void get_sat_p(double *x, void *xphi, double *fx, double *dfx)
+int iapws95_sat_p(double p, struct iapws_phi *phil, struct iapws_phi *phig)
 {
-	double rhol = x[0];
-	double rhog = x[1];
-	double t = x[2];
+	struct nroot_control ctrl = nroot_default;
 
-	iapws_phi *phil = *((iapws_phi **)(xphi));
-	iapws_phi *phig = *((iapws_phi **)(xphi) + 1);
-	iapws95_phi(rhol, t, phil);
-	iapws95_phi(rhog, t, phig);
-
-	fx[0] = phil->d10 * rhol - phig->d10 * rhog;
-	fx[1] = phil->d00 + phil->d10 - phig->d00 - phig->d10;
-	fx[2] = phil->d10 * rhol * phil->R * t * 1e-3 - phil->p;
-
-	dfx[0] = (phil->d10 * 2.0 + phil->d20);
-	dfx[1] = dfx[0] / rhol;
-	dfx[2] = dfx[0] * phil->R * t * 1e-3;
-	dfx[3] = -(phig->d10 * 2.0 + phig->d20);
-	dfx[4] = dfx[3] / rhog;
-	dfx[5] = 0.0;
-	dfx[6] = (-phil->d11 * rhol + phig->d11 * rhog) / t;
-	dfx[7] = (-phil->d01 - phil->d11 + phig->d01 + phig->d11) / t;
-	dfx[8] = (phil->d10 - phil->d11) * rhol * phil->R * 1e-3;
-}
-
-int iapws95_sat_p(double p, iapws_phi *phil, iapws_phi *phig)
-{
-	nroot_control ctrl = nroot_default;
-
-	iapws_phi *phi[2] = { phil, phig };
 	double t = if97_tsat(p);
 	if (t == 0.0) return -1;  /* test if outside of saturation line */
 	if (if97_gamma_pt(p, t, IAPWS_LIQUID, phil) != 0) return -11;
 	if (if97_gamma_pt(p, t, IAPWS_GAS, phig) != 0) return -12;
 	double x[3] = { iapws_rho(phil) * REPS, iapws_rho(phig) / REPS, t };
-	return nrootn(3, get_sat_p, x, phi, &ctrl);
+
+	//phil->p = p;
+	//phig->p = p;
+	struct iapws_phi_call call[2] = {
+		{ iapws95_phi, phil },
+		{ iapws95_phi, phig },
+	};
+	return nrootn(3, get_sat_p, x, call, &ctrl);
 }
 
-iapws_state_id iapws95_state_pt(double p, double t)
+enum iapws_state iapws95_state_pt(double p, double t)
 {
 	double ps;
-	iapws_phi phil, phig;
+	struct iapws_phi phil, phig;
 
 	if (t >= IAPWS_TT && t < IAPWS_TC && p < 620.0) {
 		/* Try with fast approximation */
@@ -488,10 +351,10 @@ iapws_state_id iapws95_state_pt(double p, double t)
 	return melt_sub_state(p, t);
 }
 
-iapws_state_id iapws95_state_rhot(double rho, double t)
+enum iapws_state iapws95_state_rhot(double rho, double t)
 {
 	double rhol, rhog;
-	iapws_phi phil, phig;
+	struct iapws_phi phil, phig;
 
 	if (t >= IAPWS_TT && t < IAPWS_TC) {
 		/* Try with fast approximation */

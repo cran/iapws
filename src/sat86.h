@@ -20,6 +20,7 @@
 #define IAPWS_SAT86_H
 
 double sat86_p(double t);
+double sat86_t(double p);
 double sat86_rhol(double t);
 double sat86_rhog(double t);
 

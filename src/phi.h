@@ -16,10 +16,35 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef IAPWS_COND_H
-#define IAPWS_COND_H
+#ifndef IAPWS_PHI_H
+#define IAPWS_PHI_H
 
-double if97_lambda(const iapws_phi *gamma);
-double iapws95_lambda(const iapws_phi *phi);
+struct iapws_phi_coef0 {
+	double n;
+	double gamma;
+};
+
+struct iapws_phi_coef1 {
+	int c;
+	int d;
+	double t;
+	double n;
+};
+
+struct iapws_phi_coef2 {
+	int d;
+	double t;
+	double n;
+	double alpha;
+	double beta;
+	double gamma;
+	double eps;
+};
+
+void iapws_phi(const double delta, const double tau,
+		const struct iapws_phi_coef0 *coef0, const int n0,
+		const struct iapws_phi_coef1 *coef1, const int n1,
+		const struct iapws_phi_coef2 *coef2, const int n2,
+		struct iapws_phi *phi);
 
 #endif

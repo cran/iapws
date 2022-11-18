@@ -16,22 +16,32 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef POW_H
-#define POW_H
+#ifndef IAPWS_POW_H
+#define IAPWS_POW_H
 
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+
+#define MATHLIB_STANDALONE
 #include <Rmath.h>
 #define POW2(x)		((x) * (x))
-#define POW(x, y)	R_pow((x), (y))
-#define POWINT(x, y)	R_pow_di((x), (y))
+#define POWINT(x, y)	powint((x), (y))
+#define POW(x, y)	((y) == ((int)(y)) ? powint(x, (int)(y)) : R_pow(x, y))
 
 inline double powint(double x, int i)
 {
+	double y;
 	switch (i) {
 		case 0: return 1.0;
 		case 1: return x;
 		case 2: return x*x;
 		case 3: return x*x*x;
-		default: return POWINT(x, i);
+		case 4: x*=x; return x*x;
+		case 5: y=x*x; return y*y*x;
+		case 6: x*=x; return x*x*x;
+		case 7: y=x*x; return y*y*y*x;
+		case 8: x*=x; x*=x; return x*x;
+		case 9: x*=x*x; return x*x*x;
+		default: return R_pow_di(x, i);
 	}
 }
 

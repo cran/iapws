@@ -16,7 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* International Association for the Properties of Water and Steam,
+/*
+ * International Association for the Properties of Water and Steam,
  * IAPWS R14-08(2011), Revised Release on the Pressure along the Melting
  * and Sublimation Curves of Ordinary Water Substance
  */
@@ -25,10 +26,10 @@
 #include <math.h>
 
 #include "iapws.h"
-#include "melt08.h"
+#include "melt.h"
 #include "pow.h"
 
-static const double tmelt[] = {
+static const double tmelt[6] = {
 	273.16,
 	251.165,
 	256.164,
@@ -37,7 +38,7 @@ static const double tmelt[] = {
 	715.0,
 };
 
-static const double pmelt[] = {
+static const double pmelt[5] = {
 	611.657e-6,	/* does not match IAPWS95_PT */
 	208.566,
 	350.1,
@@ -96,7 +97,7 @@ static double melt_p7(double t)
 	return exp(ans) * pmelt[4];
 }
 
-double melt_p(double t, ice_phase_id phase)
+double melt_p(double t, enum iapws_ice phase)
 {
 	switch (phase) {
 		case ICE_IH:  return melt_p1h(t);
@@ -123,7 +124,7 @@ double sub_p(double t)
 	return exp(ans / theta) * pmelt[0];
 }
 
-iapws_state_id melt_sub_state(double p, double t)
+enum iapws_state melt_sub_state(double p, double t)
 {
 	//assert((t < tmelt[0] && p < pmelt[1]) || p > pmelt[1]);
 
@@ -155,7 +156,7 @@ iapws_state_id melt_sub_state(double p, double t)
 		else if (t > tmelt[4]) return IAPWS_LIQUID;
 		else if (p <= melt_p6(t)) return IAPWS_LIQUID;
 		else return IAPWS_SOLID;
-	} else {  //if (p < pmelt[5]) {
+	} else {  //if (p < pmelt[5])
 		if (t < tmelt[4]) return IAPWS_SOLID;
 		else if (t > tmelt[5]) return IAPWS_LIQUID;
 		else if (p <= melt_p7(t)) return IAPWS_LIQUID;

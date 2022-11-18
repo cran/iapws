@@ -4,7 +4,7 @@
   IAPWS-IF97 Physical States
 }
 \description{
-  Compute the physical state of water according the IAPWS industrial
+  Identify the physical state of water according to the IAPWS industrial
   formulation 1997.
 }
 \usage{

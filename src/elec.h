@@ -16,21 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef IAPWS_MELT08_H
-#define IAPWS_MELT08_H
+#ifndef IAPWS_ELEC_H
+#define IAPWS_ELEC_H
 
-#include "iapws.h"
-
-typedef enum {
-	ICE_IH  = 1,
-	ICE_III = 3,
-	ICE_V   = 5,
-	ICE_VI  = 6,
-	ICE_VII = 7,
-} ice_phase_id;
-
-double melt_p(double t, ice_phase_id phase);
-double sub_p(double t);
-iapws_state_id melt_sub_state(double p, double t);
+double iapws_epsilon(double rho, double t);
+double iapws_n(double rho, double t, double lambda);
+double iapws_pk(double rho, double t);
 
 #endif

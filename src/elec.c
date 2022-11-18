@@ -16,10 +16,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* International Association for the Properties of Water and Steam,
+/*
+ * International Association for the Properties of Water and Steam,
  * IAPWS R8-97, Release on the Static Dielectric Constant of Ordinary
  * Water Substance for Temperatures from 238 K to 873 K and Pressures
  * up to 1000 MPa (1997)
+ *
+ * International Association for the Properties of Water and Steam,
+ * IAPWS R9-97, Release on the Refractive Index of Ordinary Water
+ * Substance as Function of Wavelength, Temperature and Pressure (1997)
+ *
+ * International Association for the Properties of Water and Steam,
+ * IAPWS R11-07(2019), Revised Release on the Ionization Constant of H2O
+ * (2019)
  */
 
 #include "iapws.h"
@@ -33,12 +42,11 @@ static double dielec(double rho, double t)
 	const double mu2 = POW2(6.138e-30);
 	const double k = 1.380658e-23;
 
-	enum { SIZE = 12 };
 	const struct {
 		double N;
 		int i;
 		double j;
-	} coef[SIZE] = {
+	} coef[12] = {
 		{  0.978224486826e-0,	 1,	0.25	},
 		{ -0.957771379375e-0,	 1,	1.00	},
 		{  0.237511794148e-0,	 1,	2.50	},
@@ -59,7 +67,7 @@ static double dielec(double rho, double t)
 	int i;
 	double a, b;
 	double g = 1.0 + coef[11].N * delta * POW(t / 228.0 - 1.0, coef[11].j);
-	for (i = 0; i < SIZE - 1; ++i) {
+	for (i = 0; i < ARRAY_SIZE(coef) - 1; ++i) {
 		g += coef[i].N *
 			POWINT(delta, coef[i].i) *
 			POW(tau, coef[i].j);
@@ -73,7 +81,76 @@ static double dielec(double rho, double t)
 			(4.0 - b * 4.0);
 }
 
-double iapws_epsilon(const iapws_phi *phi)  /* adimensional */
+static double rind(double rho, double t, double lambda)
 {
-	return dielec(iapws_rho(phi), iapws_t(phi));
+	const double a[8] = {
+		 0.244257733,
+		 9.74634476e-3,
+		-3.73234996e-3,
+		 2.68678472e-4,
+		 1.58920570e-3,
+		 2.45934259e-3,
+		 0.900704920,
+		-1.66626219e-2,
+	};
+	const double luv2 = POW2(0.2292020);
+	const double lir2 = POW2(5.432937);
+
+	/* reduced parameters */
+	rho *= 1.0e-3;
+	t /= 273.15;
+	lambda /= 0.589;
+
+	const double l2 = POW2(lambda);
+	const double ar = (a[0] + a[1] * rho + a[2] * t + a[3] * t * l2 +
+			a[4] / l2 + a[5] / (l2 - luv2) + a[6] / (l2 - lir2) +
+			a[7] * POW2(rho)) * rho;
+	return sqrt((ar * 2.0 + 1.0) / (1.0 - ar));
 }
+
+static double pk(double rho, double t)
+{
+	const int n = 6;
+	const double gamma[4] = {
+		 6.141500e-1,
+		 4.825133e4,
+		-6.770793e4,
+		 1.010210e7,
+	};
+	const double alpha[3] = {
+		-0.864671,
+		 8659.19,
+		-22786.2,
+	};
+	const double beta[3] = {
+		 0.642044,
+		-56.8534,
+		-0.375754,
+	};
+	const double lMG = log10(IAPWS_M) - 3.0;
+
+	rho = rho * 1e-3;  /* g/cm3 */
+	t = 1.0 / t;
+	const double t2 = t * t;
+	double q = rho * exp(alpha[0] + alpha[1] * t + alpha[2] * t2 *
+			POW(rho, 2.0 / 3.0));
+	return gamma[0] + gamma[1] * t + gamma[2] * t2 + gamma[3] * t2 * t +
+		2.0 * (lMG - n * (log10(1.0 + q) - q / (1.0 + q) * rho *
+			(beta[0] + beta[1] * t + beta[2] * rho)));
+}
+
+double iapws_epsilon(double rho, double t)
+{
+	return dielec(rho, t);
+}
+
+double iapws_n(double rho, double t, double lambda)
+{
+	return rind(rho, t, lambda);
+}
+
+double iapws_pk(double rho, double t)
+{
+	return pk(rho, t);
+}
+

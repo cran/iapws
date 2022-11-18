@@ -22,7 +22,7 @@ iapws95(what, p, t, rho, h, state = NULL)
     a numeric vector giving the temperature values in K.
   }
   \item{rho}{
-    a numeric vector giving the values of density in kg/m^3.
+    a numeric vector giving the density values in kg/m\eqn{^3}.
   }
   \item{h}{
     a numeric vector giving the specific enthalpy values in kJ/kg.
@@ -52,10 +52,10 @@ iapws95(what, p, t, rho, h, state = NULL)
     \item \code{"beta"}: the pressure coefficient in MPa/K.
     \item \code{"kappat"}: the isothermal compressibility in 1/MPa.
     \item \code{"w"}: the speed of sound in m/s.
-    \item \code{"eta"}: the dynamic viscosity in \eqn{10^{-6}}Pa.s.
+    \item \code{"eta"}: the dynamic viscosity in \eqn{\mu}Pa.s.
     \item \code{"lambda"}: the thermal conductivity in mW/K/m.
-    \item \code{"sigma"}: the surface tension in mN/m.
-    \item \code{"epsilon"}: the dielectric constant.
+    %\item \code{"sigma"}: the surface tension in mN/m.
+    %\item \code{"epsilon"}: the dielectric constant.
   }
 
   A valid pair of \code{p}, \code{rho}, \code{t} and \code{h} is needed:
@@ -79,15 +79,6 @@ iapws95(what, p, t, rho, h, state = NULL)
   International Association for the Properties of Water and Steam,
   IAPWS R15-11(2011), \emph{Release on the IAPWS Formulation 2011
   for the Thermal Conductivity of Ordinary Water Substance.}
-
-  International Association for the Properties of Water and Steam,
-  IAPWS R1-76(2014), \emph{Revised Release on Surface Tension
-  of Ordinary Water Substance.}
-
-  International Association for the Properties of Water and Steam,
-  IAPWS R8-97, \emph{Release on the Static Dielectric Constant
-  of Ordinary Water Substance for Temperatures from 238 K to 873 K
-  and Pressures up to 1000 MPa.}
 }
 \author{
   Jonathan Debove
@@ -166,22 +157,5 @@ stopifnot(all.equal(tab[, "lambda", drop = FALSE],
           matrix(c(51.9298924, 130.922885, 367.787459, 757.959776,
                    1443.75556, 650.319402, 448.883487, 600.961346),
                  8, 1, dimnames = list(NULL, c("lambda"))), tolerance = 1e-9))
-}
-
-# Dielectric constant Tab. 4
-tab <- iapws95("epsilon",
-               p = c(0.1013125, 0.1013125, 10, 1000,
-                     10, 100, 500, 10, 100, 500),
-               t = c(240, 300, 300, 300,
-                     650, 650, 650, 870, 870, 870),
-               state = c(rep("liquid", 4),
-                         "gas", rep("supercritical", 2),
-                         "gas", rep("supercritical", 2)))
-format(tab, digits = 6)
-\dontshow{
-stopifnot(all.equal(tab[, "epsilon", drop = FALSE],
-          matrix(c(104.34982, 77.74735, 78.11269, 103.69632, 1.26715,
-                   17.71733, 26.62132, 1.12721, 4.98281, 15.09746),
-                 10, 1, dimnames = list(NULL, c("epsilon"))), tolerance = 1e-7))
 }
 }
