@@ -6,12 +6,10 @@ export(if97_state)
 export(iapws95)
 export(iapws95_sat)
 export(iapws95_state)
-export(.iapws95)
 
 export(heavy17)
 export(heavy17_sat)
 export(heavy17_state)
-export(.heavy17)
 
 export(ice06)
 
@@ -25,8 +23,5 @@ export(heavy17_sigma)
 export(IAPWS)
 export(IAPWS95)
 export(HEAVY17)
-
-export(.IAPWS_PROPERTIES)
-export(.IAPWS_STATES)
 
 useDynLib(iapws, .registration = TRUE)

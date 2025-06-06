@@ -27,8 +27,8 @@
  * Substance as Function of Wavelength, Temperature and Pressure (1997)
  *
  * International Association for the Properties of Water and Steam,
- * IAPWS R11-07(2019), Revised Release on the Ionization Constant of H2O
- * (2019)
+ * IAPWS R11-24, Revised Release on the Ionization Constant of H2O
+ * (2024)
  */
 
 #include "iapws.h"
@@ -110,31 +110,30 @@ static double rind(double rho, double t, double lambda)
 
 static double pk(double rho, double t)
 {
-	const int n = 6;
-	const double gamma[4] = {
+	int const n = 6;
+	double const gamma[4] = {
 		 6.141500e-1,
 		 4.825133e4,
 		-6.770793e4,
 		 1.010210e7,
 	};
-	const double alpha[3] = {
-		-0.864671,
-		 8659.19,
-		-22786.2,
+	double const alpha[3] = {
+		-0.702132,
+		+8681.05,
+		-24145.1,
 	};
-	const double beta[3] = {
-		 0.642044,
-		-56.8534,
-		-0.375754,
+	double const beta[3] = {
+		+0.813876,
+		-51.4471,
+		-0.469920,
 	};
-	const double lMG = log10(IAPWS_M) - 3.0;
+	double const lMG = log10(IAPWS_M) - 3.0;
 
 	rho = rho * 1e-3;  /* g/cm3 */
 	t = 1.0 / t;
-	const double t2 = t * t;
-	double q = rho * exp(alpha[0] + alpha[1] * t + alpha[2] * t2 *
-			POW(rho, 2.0 / 3.0));
-	return gamma[0] + gamma[1] * t + gamma[2] * t2 + gamma[3] * t2 * t +
+	double const q = rho * exp(alpha[0] + t * (alpha[1] + t * alpha[2] *
+			POW(rho, 2.0 / 3.0)));
+	return gamma[0] + t * (gamma[1] + t * (gamma[2] + t * gamma[3])) +
 		2.0 * (lMG - n * (log10(1.0 + q) - q / (1.0 + q) * rho *
 			(beta[0] + beta[1] * t + beta[2] * rho)));
 }

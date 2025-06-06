@@ -37,8 +37,8 @@ iapws_pk(rho, t)
   Substance as Function of Wavelength, Temperature and Pressure.} 
 
   International Association for the Properties of Water and Steam,
-  IAPWS R11-07(2019), \emph{Revised Release on the Ionization
-  Constant of H2O.}
+  IAPWS R11-2024, \emph{Revised Release on the Ionization Constant
+  of H2O.}
 }
 \author{
   Jonathan Debove
@@ -72,11 +72,11 @@ dim(tab) <- c(4, 4, 3)
 print(tab, digits = 8)
 
 # Ionization constant Tab. 3
-tab <- iapws_pk(rho = c(1, 0.07, 0.7, 0.2, 1.2) * 1e3,
-                t = c(300, 600, 600, 800, 800))
+tab <- iapws_pk(rho = c(1, 0.07, 0.7, 0.2, 1.2, 0.0) * 1e3,
+                t = c(300, 600, 600, 800, 800, 1270.0))
 print(tab, digits = 7)
 \dontshow{
-stopifnot(all.equal(tab, c(13.906565, 21.048874, 11.203153, 15.089765,
-			   6.438330), tolerance = 1e-7))
+stopifnot(all.equal(tab, c(13.906672, 20.161651, 11.147093, 14.487671,
+			   6.4058649, 35.081557), tolerance = 1e-7))
 }
 }

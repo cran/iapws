@@ -1,6 +1,6 @@
 a36207309d382da27cd66fdaae922e3c *COPYING
-87f969b7f67e1221178f5c78bbfc0404 *DESCRIPTION
-13e372318fa0883ed3ac08b7eda9e347 *NAMESPACE
+383c3035e27a528a48c8b67de5b53c2a *DESCRIPTION
+a077076aad7e0643c5c7dfa8998917c0 *NAMESPACE
 60f6101b81d7b76965b119898aed89e9 *R/callWrapper.R
 5918f35e11d8ca72ff2667198be8f242 *R/checkArgs.R
 6a6e075f31c38e7350e8b2e7e03f3006 *R/const.R
@@ -10,12 +10,12 @@ d0d3ee2edb51781efddc98c52b41c618 *R/heavy17.R
 358431f2a253979cb4070531d0b92fd8 *R/ice06.R
 32f566ed276bda927a01cf675ce5f13c *R/if97.R
 2d6ca5117c273d12ab1b3b23a4aa5df1 *R/nroot.R
-a2dc19e2ada4fa1d450a5d175ca5e691 *build/vignette.rds
+009f7bafab97fc742aa042cfb783c78a *build/vignette.rds
 42b6e281d2e7b4200bc704a8af9905ef *inst/doc/iapws.R
 3e2f98cfd136b1750336f5d8a71b3eea *inst/doc/iapws.Rnw
-0df699a95abfa48309584ab5bf3f2aef *inst/doc/iapws.pdf
+7f43d82493aea891a58dc918fc91ffb5 *inst/doc/iapws.pdf
 8d10c345f6f703dae104b73adedfbc79 *man/const.Rd
-2467bcd3dcaabcc4b52b50b1fee77636 *man/elec.Rd
+8b4b3be7b4fb731ee39b42b04d81760c *man/elec.Rd
 b346e824d459c1526a566b5a2a046566 *man/heavy17.Rd
 f60f71990c94d915009a77dbfbad259a *man/heavy17_sat.Rd
 0261bb1974c551ab6982f32a21e4e354 *man/heavy17_state.Rd
@@ -31,7 +31,7 @@ d22cca9368ae4b7efec06fdedaffca57 *man/ice06.Rd
 723ba741efc7bf0c63481879cf5b864a *src/R_interface.c
 180c122afa579bb5da862e328a4e6e6b *src/R_interface.h
 c21b5bd648cbd4b850c82c43e63f1b36 *src/coef.h
-106d669ee690ea09ae9061cbd311f9ff *src/elec.c
+a33f9823b6d5f6a13cf1e2cfecf6cd41 *src/elec.c
 148b34a3b343758f9f20511cea6f28ac *src/elec.h
 220db8384b2774e186c4348644df4919 *src/heavy17.c
 cef27e713d8a6c80ac57dde13adce2a0 *src/heavy17.h
